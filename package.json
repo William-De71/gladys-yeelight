@@ -1,0 +1,32 @@
+{
+  "name": "gladys-yeelight",
+  "version": "1.0.0",
+  "private": true,
+  "description": "External integration to control your Yeelight Wi-Fi lights from Gladys Assistant.",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "changelog": "conventional-changelog -n ./changelog.config.mjs -i CHANGELOG.md -s -r 1",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=22.20"
+  },
+  "dependencies": {
+    "@gladysassistant/integration-sdk": "^0.12.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "conventional-changelog": "^8.1.3",
+    "conventional-changelog-conventionalcommits": "^10.4.0",
+    "eslint": "^10.7.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.7.0",
+    "prettier": "^3.9.5"
+  },
+  "license": "Apache-2.0"
+}

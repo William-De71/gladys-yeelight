@@ -1,0 +1,97 @@
+# Intégration Yeelight
+
+Cette intégration permet de piloter vos lampes **Yeelight** (ampoules, rubans LED, lampes de chevet, plafonniers) depuis Gladys Assistant, directement sur votre réseau local. Aucun compte cloud, aucune passerelle, aucun serveur intermédiaire : Gladys parle directement à vos lampes.
+
+## Fonctionnalités
+
+L'intégration s'adapte à ce que chaque lampe sait faire — une lampe annonce elle-même ses capacités, et seules les fonctionnalités réellement disponibles sont créées :
+
+| Fonctionnalité         | Lampes concernées                                    |
+| ---------------------- | ---------------------------------------------------- |
+| Allumer / éteindre     | Toutes                                               |
+| Luminosité (1 à 100 %) | Toutes les lampes réglables                          |
+| Couleur (RVB)          | Modèles couleur (`color`, rubans, lampes de chevet)  |
+| Température de couleur | Modèles blanc réglable et couleur                    |
+| Lumière d'ambiance     | Plafonniers et barres lumineuses avec rétroéclairage |
+| Veilleuse (mode lune)  | Plafonniers                                          |
+
+### Les états arrivent en temps réel
+
+Vos lampes **poussent** leurs changements d'état : l'intégration garde une connexion ouverte vers chaque lampe, et Gladys reçoit la nouvelle valeur à l'instant où elle change — y compris quand vous utilisez l'application Yeelight, la télécommande, ou l'interrupteur mural. Il n'y a pas d'intervalle d'interrogation à régler.
+
+## Prérequis
+
+### Activer « Contrôle LAN » — indispensable
+
+C'est **l'étape à ne pas oublier** : par défaut, une lampe Yeelight refuse toutes les commandes locales. Sans cette option, la lampe ne sera ni trouvée ni pilotable.
+
+Pour chaque lampe, dans l'application **Yeelight** :
+
+1. Ouvrez la lampe.
+2. Allez dans **Réglages** (icône en haut à droite).
+3. Activez **Contrôle LAN** (« LAN Control » / « Mode développeur »).
+
+> À refaire pour chaque lampe, une par une. C'est un réglage stocké dans la lampe elle-même.
+
+### Réseau
+
+- Gladys et vos lampes doivent être sur le **même réseau local**.
+- La découverte utilise du multicast (port UDP 1982). Si votre routeur le filtre, ou si vos lampes sont sur un autre VLAN, vous pourrez tout de même les ajouter à la main (voir plus bas).
+
+## Configuration
+
+### 1. Découvrir vos lampes
+
+Une fois « Contrôle LAN » activé, allez dans l'écran **Découverte** de l'intégration et lancez un scan. Vos lampes apparaissent avec leur nom (celui que vous leur avez donné dans l'application Yeelight), prêtes à être ajoutées. **Aucune adresse IP à saisir.**
+
+### 2. Durée de transition
+
+Règle le fondu appliqué à chaque changement (allumage, variation, couleur). La valeur par défaut de **500 ms** donne une transition douce et naturelle. Mettez **0** pour un changement instantané.
+
+### 3. Lampes non trouvées par le scan
+
+Si une lampe n'apparaît pas alors que « Contrôle LAN » est bien activé, ajoutez son adresse dans **Lampes ajoutées à la main**, une par ligne :
+
+```
+192.168.1.42
+192.168.1.43:55443
+```
+
+> **Important :** donnez à ces lampes une **adresse IP fixe** dans votre routeur. Contrairement à une lampe trouvée par le scan — identifiée par son numéro de série, stable à vie — une lampe ajoutée à la main est identifiée par son adresse. Si son bail DHCP change, Gladys la verra comme une nouvelle lampe différente.
+
+### 4. Durée de la découverte
+
+Temps pendant lequel le scan écoute les réponses. 5 secondes suffisent dans la grande majorité des cas ; augmentez cette valeur si votre réseau est chargé et que certaines lampes manquent à l'appel.
+
+## Actions disponibles
+
+- **Tester la connexion** : relance une découverte et indique combien de lampes ont répondu.
+- **Reconnecter les lampes** : ferme toutes les connexions et les rouvre. Utile après une coupure de courant ou un changement de réseau.
+
+## Bon à savoir
+
+### Régler une couleur sur une lampe éteinte
+
+Une lampe Yeelight refuse les commandes de couleur, de température et de luminosité quand elle est éteinte. L'intégration **l'allume automatiquement** avant d'appliquer votre réglage : cliquer sur une couleur allume donc la lampe dans cette couleur, ce qui est le comportement attendu.
+
+### La luminosité commence à 1 %, pas à 0 %
+
+Une Yeelight n'a pas d'état « 0 % » : le zéro, c'est l'extinction. Régler la luminosité sur 0 dans Gladys **éteint** donc la lampe.
+
+### La couleur affichée en mode blanc
+
+Quand une lampe est en mode blanc (température de couleur), elle continue de mémoriser la dernière couleur utilisée. Gladys ne l'affiche volontairement pas comme couleur active, pour ne pas montrer une couleur que la lampe n'a pas.
+
+### Limites des lampes
+
+Chaque lampe accepte **4 connexions simultanées** et **60 commandes par minute**. L'intégration n'ouvre qu'une seule connexion par lampe et lisse automatiquement les rafales de commandes, mais gardez ces limites en tête si vous pilotez aussi vos lampes depuis d'autres applications en parallèle.
+
+## En cas de problème
+
+| Symptôme                                     | Cause la plus probable                                                                          |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Aucune lampe trouvée                         | « Contrôle LAN » n'est pas activé dans l'application Yeelight                                   |
+| Une seule lampe sur plusieurs est trouvée    | L'option n'est activée que sur cette lampe — elle se règle lampe par lampe                      |
+| Une lampe disparaît puis revient             | Coupure Wi-Fi ou interrupteur mural : l'intégration se reconnecte seule, en espaçant les essais |
+| Une lampe ajoutée à la main devient inconnue | Son adresse IP a changé — donnez-lui une adresse fixe dans votre routeur                        |
+| Les commandes ne passent plus après un temps | Un autre logiciel occupe les 4 connexions de la lampe                                           |

@@ -1,0 +1,123 @@
+{
+  "manifest_version": 1,
+  "type": "device",
+  "name": "Yeelight",
+  "description": {
+    "en": "Control your Yeelight Wi-Fi lights locally: on/off, brightness, color.",
+    "fr": "Pilotez vos lampes Yeelight en Wi-Fi localement : on/off, luminosité, couleur."
+  },
+  "version": "1.0.0",
+  "docker_image": "ghcr.io/william-de71/gladys-yeelight:1.0.0",
+  "gladys_version": ">=4.86.0",
+  "cover_image": "https://raw.githubusercontent.com/William-De71/gladys-yeelight/main/cover.jpg",
+  "categories": ["lighting"],
+  "transports": ["local"],
+  "network_discovery": [
+    {
+      "type": "udp-active-broadcast",
+      "ports": [1982]
+    }
+  ],
+  "config_schema": [
+    {
+      "key": "intro",
+      "type": "section",
+      "label": {
+        "en": "Getting started",
+        "fr": "Pour commencer"
+      },
+      "description": {
+        "en": "This integration talks to your Yeelight lights on your local network, with no cloud account involved.\n\nOne thing to do first: in the Yeelight app, open each light and enable \"LAN Control\" (Settings → LAN Control). A light without it refuses every local command and will not be found. Then go to the Discover screen and run a scan: your lights appear there, ready to be added. No IP address to type.",
+        "fr": "Cette intégration communique avec vos lampes Yeelight sur votre réseau local, sans passer par un compte cloud.\n\nUne chose à faire avant tout : dans l'application Yeelight, ouvrez chaque lampe et activez « Contrôle LAN » (Réglages → Contrôle LAN). Une lampe sans cette option refuse toute commande locale et ne sera pas trouvée. Allez ensuite dans l'écran Découverte et lancez un scan : vos lampes y apparaissent, prêtes à être ajoutées. Aucune adresse IP à saisir."
+      },
+      "links": [
+        {
+          "url": "https://www.yeelight.com/",
+          "label": {
+            "en": "Yeelight website",
+            "fr": "Site Yeelight"
+          }
+        }
+      ]
+    },
+    {
+      "key": "transition_duration",
+      "type": "number",
+      "label": {
+        "en": "Transition duration (ms)",
+        "fr": "Durée de transition (ms)"
+      },
+      "description": {
+        "en": "How long a light takes to fade to its new state. Set 0 for an instant change.",
+        "fr": "Temps que met une lampe pour passer à son nouvel état en fondu. Mettez 0 pour un changement instantané."
+      },
+      "required": false,
+      "default": 500,
+      "min": 0,
+      "max": 5000
+    },
+    {
+      "key": "advanced",
+      "type": "section",
+      "label": {
+        "en": "Lights not found by the scan",
+        "fr": "Lampes non trouvées par le scan"
+      },
+      "description": {
+        "en": "Fill the field below only if one of your lights is not found by the network scan — another VLAN, or a router that filters multicast traffic.",
+        "fr": "Ne remplissez le champ ci-dessous que si une de vos lampes n'est pas trouvée par le scan réseau — autre VLAN, ou routeur qui filtre le trafic multicast."
+      }
+    },
+    {
+      "key": "bulbs",
+      "type": "string",
+      "label": {
+        "en": "Lights added by hand",
+        "fr": "Lampes ajoutées à la main"
+      },
+      "description": {
+        "en": "One address per line (`192.168.1.42`, or `192.168.1.42:55443`). Give these lights a fixed address in your router: unlike a light found by the scan, one added by hand is identified by its address, and a new DHCP lease would make Gladys see it as a different light.",
+        "fr": "Une adresse par ligne (`192.168.1.42`, ou `192.168.1.42:55443`). Donnez à ces lampes une adresse fixe dans votre routeur : contrairement à une lampe trouvée par le scan, une lampe ajoutée à la main est identifiée par son adresse, et un nouveau bail DHCP ferait voir à Gladys une lampe différente."
+      },
+      "placeholder": {
+        "en": "192.168.1.42\n192.168.1.43:55443",
+        "fr": "192.168.1.42\n192.168.1.43:55443"
+      },
+      "required": false
+    },
+    {
+      "key": "scan_duration",
+      "type": "number",
+      "label": {
+        "en": "Discovery duration (s)",
+        "fr": "Durée de la découverte (s)"
+      },
+      "description": {
+        "en": "How long the scan listens for lights answering on the network.",
+        "fr": "Durée pendant laquelle le scan écoute les lampes qui répondent sur le réseau."
+      },
+      "required": false,
+      "default": 5,
+      "min": 3,
+      "max": 30
+    }
+  ],
+  "actions": [
+    {
+      "key": "test_connection",
+      "label": {
+        "en": "Test the connection",
+        "fr": "Tester la connexion"
+      },
+      "timeout_seconds": 60
+    },
+    {
+      "key": "reconnect",
+      "label": {
+        "en": "Reconnect the lights",
+        "fr": "Reconnecter les lampes"
+      },
+      "timeout_seconds": 60
+    }
+  ]
+}
