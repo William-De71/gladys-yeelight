@@ -199,12 +199,30 @@ export function readState(descriptor, props) {
       return readNumber(props.ct);
 
     case FEATURE_KEYS.COLOR: {
-      // `rgb` only reflects reality while the bulb is in colour mode: in CT
-      // mode it keeps whatever colour was last set, so publishing it would
-      // paint the Gladys UI with a colour the lamp is not showing.
+      // `rgb` only reflects reality while the bulb shows a COLOUR: in CT mode
+      // it keeps whatever colour was last set, so publishing it would paint the
+      // Gladys UI with a colour the lamp is not showing.
+      //
+      // HSV mode counts as a colour: strips and bedside lamps sit in mode 3
+      // after the Yeelight app sets a colour, and the bulb keeps `rgb` in sync
+      // with the hue/sat it is displaying. Treating mode 3 as "not a colour"
+      // would leave those lamps with a colour Gladys never shows.
       const mode = readNumber(props.color_mode);
-      if (mode !== undefined && mode !== COLOR_MODE_RGB) {
+      if (mode === COLOR_MODE_TEMPERATURE) {
         return undefined;
+      }
+      if (mode === COLOR_MODE_HSV) {
+        // Prefer the reported rgb; fall back to converting hue/sat when the
+        // firmware only reports those.
+        const rgb = readNumber(props.rgb);
+        if (rgb !== undefined) {
+          return rgb;
+        }
+        const hue = readNumber(props.hue);
+        const saturation = readNumber(props.sat);
+        return hue === undefined || saturation === undefined
+          ? undefined
+          : hsvToRgbInteger(hue, saturation);
       }
       return readNumber(props.rgb);
     }
@@ -217,7 +235,7 @@ export function readState(descriptor, props) {
 
     case FEATURE_KEYS.BACKGROUND_COLOR: {
       const mode = readNumber(props.bg_lmode);
-      if (mode !== undefined && mode !== COLOR_MODE_RGB) {
+      if (mode === COLOR_MODE_TEMPERATURE) {
         return undefined;
       }
       return readNumber(props.bg_rgb);
@@ -232,6 +250,35 @@ export function readState(descriptor, props) {
     default:
       return undefined;
   }
+}
+
+/**
+ * Convert a hue/saturation pair into the single 0xRRGGBB integer Gladys stores.
+ * Brightness is deliberately fixed at full: it is carried by its own feature,
+ * so folding it in here would darken the colour swatch twice.
+ * @param {number} hue - Hue, 0-359.
+ * @param {number} saturation - Saturation, 0-100.
+ * @returns {number} The packed RGB integer.
+ * @example
+ * hsvToRgbInteger(0, 100); // 16711680 (red)
+ */
+export function hsvToRgbInteger(hue, saturation) {
+  const h = ((Number(hue) % 360) + 360) % 360;
+  const s = Math.min(1, Math.max(0, Number(saturation) / 100));
+  const c = s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = 1 - c;
+  const sector = Math.floor(h / 60) % 6;
+  const [r, g, b] = [
+    [c, x, 0],
+    [x, c, 0],
+    [0, c, x],
+    [0, x, c],
+    [x, 0, c],
+    [c, 0, x],
+  ][sector];
+  const to255 = (v) => Math.round((v + m) * 255);
+  return (to255(r) << 16) | (to255(g) << 8) | to255(b);
 }
 
 /**
@@ -285,6 +332,9 @@ export function propsForFeatures(descriptors) {
         props.add('rgb');
         // Needed to know whether `rgb` is meaningful right now.
         props.add('color_mode');
+        // Fallback for a firmware that only reports hue/sat in HSV mode.
+        props.add('hue');
+        props.add('sat');
         break;
       case FEATURE_KEYS.BACKGROUND_POWER:
         props.add('bg_power');

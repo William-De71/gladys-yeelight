@@ -6,6 +6,7 @@ import {
   propsForFeatures,
   effectArgs,
   clamp,
+  hsvToRgbInteger,
   FEATURE_KEYS,
 } from '../src/yeelight/convert.js';
 
@@ -68,6 +69,31 @@ test('a transition under the spec floor becomes an instant change', () => {
   assert.deepEqual(effectArgs(undefined), ['sudden', 30]);
 });
 
+test('a colour is published in HSV mode, which strips sit in', () => {
+  // Verified against a real strip6: the Yeelight app leaves it in mode 3, and
+  // the firmware keeps `rgb` in sync with the hue/sat it displays. Treating
+  // mode 3 as "not a colour" left those lamps with a colour Gladys never showed.
+  assert.equal(
+    readState({ key: FEATURE_KEYS.COLOR }, { rgb: '16641023', color_mode: '3' }),
+    16641023,
+  );
+});
+
+test('a colour in HSV mode falls back to hue/sat when rgb is missing', () => {
+  assert.equal(
+    readState({ key: FEATURE_KEYS.COLOR }, { color_mode: '3', hue: '0', sat: '100' }),
+    16711680,
+  );
+});
+
+test('hue/saturation convert to the packed integer Gladys stores', () => {
+  assert.equal(hsvToRgbInteger(0, 100), 0xff0000);
+  assert.equal(hsvToRgbInteger(120, 100), 0x00ff00);
+  assert.equal(hsvToRgbInteger(240, 100), 0x0000ff);
+  // Saturation 0 is white whatever the hue.
+  assert.equal(hsvToRgbInteger(200, 0), 0xffffff);
+});
+
 test('a colour read in temperature mode is not published', () => {
   // In CT mode the `rgb` property keeps a stale value; publishing it would
   // paint the Gladys UI with a colour the lamp is not showing.
@@ -100,7 +126,7 @@ test('the night light state is read from active_mode', () => {
 
 test('only the properties the features need are requested', () => {
   const props = propsForFeatures([{ key: FEATURE_KEYS.POWER }, { key: FEATURE_KEYS.COLOR }]);
-  assert.deepEqual(props.sort(), ['color_mode', 'power', 'rgb']);
+  assert.deepEqual(props.sort(), ['color_mode', 'hue', 'power', 'rgb', 'sat']);
   // color_mode comes along because it decides whether `rgb` is meaningful.
   assert.ok(props.includes('color_mode'));
 });

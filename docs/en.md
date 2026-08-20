@@ -35,8 +35,9 @@ For each light, in the **Yeelight** app:
 
 ### Network
 
-- Gladys and your lights must be on the **same local network**.
-- Discovery uses multicast (UDP port 1982). If your router filters it, or if your lights sit on another VLAN, you can still add them by hand (see below).
+- Gladys and your lights must be on the **same subnet** for automatic discovery to work.
+- Discovery broadcasts a request on UDP port 1982. **A broadcast never crosses a router**: if your lights sit on another VLAN or subnet than Gladys, the scan will not find them — that is a network boundary, not a setting to tune. Raising the scan duration changes nothing.
+- In that case, add your lights **by hand** (see below): control itself is direct TCP and works fine across subnets, as long as they are routed.
 
 ## Configuration
 
@@ -50,7 +51,12 @@ Sets the fade applied to every change (switching on, dimming, color). The defaul
 
 ### 3. Lights not found by the scan
 
-If a light does not show up even though "LAN Control" is enabled, add its address under **Lights added by hand**, one per line:
+Two cases lead here, and the second is the most common:
+
+- "LAN Control" is not enabled on the light (see Requirements);
+- **your lights sit on another subnet / VLAN than Gladys** — the scan structurally cannot reach them, but control works.
+
+Add their address under **Lights added by hand**, one per line:
 
 ```
 192.168.1.42

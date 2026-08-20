@@ -35,8 +35,9 @@ Pour chaque lampe, dans l'application **Yeelight** :
 
 ### Réseau
 
-- Gladys et vos lampes doivent être sur le **même réseau local**.
-- La découverte utilise du multicast (port UDP 1982). Si votre routeur le filtre, ou si vos lampes sont sur un autre VLAN, vous pourrez tout de même les ajouter à la main (voir plus bas).
+- Gladys et vos lampes doivent être sur le **même sous-réseau** pour que la découverte automatique fonctionne.
+- La découverte diffuse une requête en broadcast sur le port UDP 1982. **Un broadcast ne traverse jamais un routeur** : si vos lampes sont sur un autre VLAN ou un autre sous-réseau que Gladys, le scan ne les trouvera pas — c'est une limite du réseau, pas un réglage à ajuster. Allonger la durée du scan n'y change rien.
+- Dans ce cas, ajoutez vos lampes **à la main** (voir plus bas) : le pilotage, lui, passe en TCP direct et fonctionne parfaitement entre sous-réseaux dès lors qu'ils sont routés.
 
 ## Configuration
 
@@ -50,7 +51,12 @@ Règle le fondu appliqué à chaque changement (allumage, variation, couleur). L
 
 ### 3. Lampes non trouvées par le scan
 
-Si une lampe n'apparaît pas alors que « Contrôle LAN » est bien activé, ajoutez son adresse dans **Lampes ajoutées à la main**, une par ligne :
+Deux cas mènent ici, et le second est le plus courant :
+
+- « Contrôle LAN » n'est pas activé sur la lampe (voir Prérequis) ;
+- **vos lampes sont sur un autre sous-réseau / VLAN que Gladys** — le scan ne peut structurellement pas les atteindre, mais le pilotage fonctionne.
+
+Ajoutez alors leur adresse dans **Lampes ajoutées à la main**, une par ligne :
 
 ```
 192.168.1.42

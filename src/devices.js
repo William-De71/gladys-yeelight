@@ -87,6 +87,10 @@ export async function probeBulb(host, port = DEFAULT_CONTROL_PORT) {
     // `get_prop` cannot return the id nor the support list, so the identity
     // comes from the properties that do exist, and the support list is inferred
     // from which of them the bulb actually knows about.
+    // `model` and `fw_ver` ARE readable over the control channel, even though
+    // the spec only documents them as discovery headers — which is what lets a
+    // hand-declared bulb get the colour temperature range of its real model
+    // instead of the generic fallback.
     const props = await client.getProps([
       'power',
       'bright',
@@ -96,6 +100,9 @@ export async function probeBulb(host, port = DEFAULT_CONTROL_PORT) {
       'sat',
       'color_mode',
       'name',
+      'model',
+      'fw_ver',
+      'bg_power',
     ]);
 
     return {
@@ -105,8 +112,8 @@ export async function probeBulb(host, port = DEFAULT_CONTROL_PORT) {
       id: `manual-${host.replace(/[^a-zA-Z0-9]/g, '-')}`,
       host,
       port,
-      model: '',
-      firmwareVersion: '',
+      model: props.model || '',
+      firmwareVersion: props.fw_ver || '',
       // Infer the capabilities from the properties the bulb reports: a bulb
       // answering `rgb` does colour, one answering `ct` does temperature.
       support: [
@@ -116,6 +123,10 @@ export async function probeBulb(host, port = DEFAULT_CONTROL_PORT) {
         props.bright !== undefined ? 'set_bright' : '',
         props.rgb !== undefined ? 'set_rgb' : '',
         props.ct !== undefined ? 'set_ct_abx' : '',
+        // A bulb answering `bg_power` carries a background light.
+        props.bg_power !== undefined ? 'bg_set_power' : '',
+        props.bg_power !== undefined ? 'bg_set_bright' : '',
+        props.bg_power !== undefined ? 'bg_set_rgb' : '',
       ]
         .filter(Boolean)
         .join(' '),

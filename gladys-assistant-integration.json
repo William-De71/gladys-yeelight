@@ -64,8 +64,8 @@
         "fr": "Lampes non trouvées par le scan"
       },
       "description": {
-        "en": "Fill the field below only if one of your lights is not found by the network scan — another VLAN, or a router that filters multicast traffic.",
-        "fr": "Ne remplissez le champ ci-dessous que si une de vos lampes n'est pas trouvée par le scan réseau — autre VLAN, ou routeur qui filtre le trafic multicast."
+        "en": "Fill the field below if a light is not found by the network scan. The most common reason: your lights sit on another subnet or VLAN than Gladys — the discovery broadcast does not cross a router, so the scan cannot reach them, while control itself works fine. Raising the discovery duration does not help in that case.",
+        "fr": "Remplissez le champ ci-dessous si une lampe n'est pas trouvée par le scan réseau. La raison la plus courante : vos lampes sont sur un autre sous-réseau ou VLAN que Gladys — le broadcast de découverte ne franchit pas un routeur, donc le scan ne peut pas les atteindre, alors que le pilotage fonctionne. Augmenter la durée de découverte n'y change rien."
       }
     },
     {
@@ -93,8 +93,8 @@
         "fr": "Durée de la découverte (s)"
       },
       "description": {
-        "en": "How long the scan listens for lights answering on the network.",
-        "fr": "Durée pendant laquelle le scan écoute les lampes qui répondent sur le réseau."
+        "en": "How long the scan listens for lights answering on the network. Only useful on a busy network: it cannot help if your lights are on another subnet.",
+        "fr": "Durée pendant laquelle le scan écoute les lampes qui répondent sur le réseau. Utile seulement si votre réseau est chargé : cela ne peut rien si vos lampes sont sur un autre sous-réseau."
       },
       "required": false,
       "default": 5,
