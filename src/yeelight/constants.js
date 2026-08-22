@@ -82,6 +82,11 @@ export const BRIGHTNESS_MAX = 100;
 // Color temperature in Kelvin. The usable range depends on the model, so these
 // are only the fallback bounds of the spec; a bulb whose model is known gets
 // the range of its model (see models.js).
+//
+// NOTE: these are the bounds of the YEELIGHT side of the wire. Gladys does not
+// speak Kelvin for a `light.temperature` feature — it speaks MIRED (see the
+// conversion in convert.js), so these values are converted before they ever
+// reach a feature descriptor.
 export const COLOR_TEMPERATURE_MIN = 1700;
 export const COLOR_TEMPERATURE_MAX = 6500;
 

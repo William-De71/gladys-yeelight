@@ -88,6 +88,21 @@ A Yeelight has no "0 %" state: zero means off. Setting the brightness to 0 in Gl
 
 When a light is in white mode (color temperature), it still remembers the last color used. Gladys deliberately does not show it as the active color, so you never see a color the light is not actually displaying.
 
+### Ceiling lights have two independent lights
+
+A ceiling light with a backlight (ceiling10, light bars…) exposes **two separate lights**, and Gladys names them explicitly:
+
+- **Main light**, **Main brightness**, **Main colour**, **Main colour temperature**;
+- **Ambient light**, **Ambient brightness**, **Ambient colour**.
+
+Each one switches on and off independently of the other. To drive both in one go, create a Gladys **scene** acting on both switches — that is how Gladys groups several commands.
+
+On a light without a backlight there is only one light, and the labels stay simple (**On/Off**, **Brightness**, **Colour**, **Colour temperature**).
+
+### Colour temperature
+
+The temperature slider follows the Gladys gradient: **left is cold, bluish light; right is warm, orange light.** The integration converts that value into the Kelvin the light understands, respecting the real range of your model (2700–6500 K on a ceiling light, 1700–6500 K on a colour bulb).
+
 ### Light limits
 
 Each light accepts **4 simultaneous connections** and **60 commands per minute**. The integration opens a single connection per light and smooths command bursts automatically, but keep those limits in mind if you also drive your lights from other apps at the same time.

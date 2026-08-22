@@ -188,8 +188,13 @@ export function buildDevice(gladys, bulb) {
   const ids = gladys.externalIds(EXTERNAL_ID_TYPE, bulb.id);
   const name = deviceName(bulb);
 
-  const features = describeBulb(bulb).map((descriptor) => ({
-    name: featureName(name, descriptor),
+  const descriptors = describeBulb(bulb);
+  // A bulb with a background light needs its labels disambiguated
+  // ("Main brightness" / "Ambient brightness"); a plain bulb does not.
+  const hasAmbient = descriptors.some((descriptor) => String(descriptor.key).startsWith('bg_'));
+
+  const features = descriptors.map((descriptor) => ({
+    name: featureName(descriptor, { hasAmbient }),
     external_id: ids.feature(descriptor.key),
     category: descriptor.category,
     type: descriptor.type,

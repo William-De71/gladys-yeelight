@@ -58,12 +58,20 @@ test('the temperature range follows the model, in Kelvin', () => {
   assert.deepEqual(temperatureRange('color'), { min: 1700, max: 6500 });
   // An unknown model falls back to the spec's own bounds.
   assert.deepEqual(temperatureRange('brand-new'), { min: 1700, max: 6500 });
+});
 
+test('the temperature feature is published in mired, not in Kelvin', () => {
+  // Gladys renders `light.temperature` with a fixed cold->warm gradient, so the
+  // value has to GROW towards warm. Kelvin runs the other way; mired is what
+  // the native integrations expose (Hue 153-500, Tasmota 123-500).
   const [temperature] = describeBulb({ model: 'ceiling1', support: 'set_ct_abx' }).filter(
     (feature) => feature.key === FEATURE_KEYS.TEMPERATURE,
   );
-  assert.equal(temperature.min, 2700);
-  assert.equal(temperature.unit, 'kelvin');
+  // 6500K -> 154 mired (cold end), 2700K -> 370 mired (warm end).
+  assert.equal(temperature.min, 154);
+  assert.equal(temperature.max, 370);
+  // No unit: the SDK has no mired constant, and declaring KELVIN was the bug.
+  assert.equal(temperature.unit, undefined);
 });
 
 test('brightness never offers a 0 the bulb would refuse', () => {
@@ -99,10 +107,23 @@ test('a bulb falls back to a readable name, never to its raw id', () => {
   assert.equal(deviceName({}), 'Yeelight');
 });
 
-test('feature names are readable in the Gladys UI', () => {
-  assert.equal(featureName('Salon', { key: FEATURE_KEYS.BRIGHTNESS }), 'Salon - brightness');
+test('a feature name does not repeat the device name', () => {
+  // Gladys already shows a feature under its device, so prefixing the label
+  // with the bulb name produced rows reading "Salon - Salon - brightness".
+  assert.equal(featureName({ key: FEATURE_KEYS.BRIGHTNESS }), 'Brightness');
+  assert.equal(featureName({ key: FEATURE_KEYS.TEMPERATURE }), 'Colour temperature');
+  assert.equal(featureName({ key: FEATURE_KEYS.POWER }), 'On/Off');
+});
+
+test('a bulb with an ambient light says which light each feature drives', () => {
+  // On a ceiling light with an ambient ring, two features called "Colour" side
+  // by side are unusable.
+  const options = { hasAmbient: true };
+  assert.equal(featureName({ key: FEATURE_KEYS.BRIGHTNESS }, options), 'Main brightness');
+  assert.equal(featureName({ key: FEATURE_KEYS.POWER }, options), 'Main light');
   assert.equal(
-    featureName('Salon', { key: FEATURE_KEYS.TEMPERATURE }),
-    'Salon - color temperature',
+    featureName({ key: FEATURE_KEYS.BACKGROUND_BRIGHTNESS }, options),
+    'Ambient brightness',
   );
+  assert.equal(featureName({ key: FEATURE_KEYS.BACKGROUND_COLOR }, options), 'Ambient colour');
 });

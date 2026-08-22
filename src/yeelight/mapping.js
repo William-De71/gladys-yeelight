@@ -11,7 +11,7 @@
 // -----------------------------------------------------------------------------
 
 import { DEVICE_FEATURE_CATEGORIES, DEVICE_FEATURE_UNITS } from '@gladysassistant/integration-sdk';
-import { FEATURE_KEYS, LIGHT_TYPES } from './convert.js';
+import { FEATURE_KEYS, LIGHT_TYPES, kelvinRangeToMired } from './convert.js';
 import { BRIGHTNESS_MIN, BRIGHTNESS_MAX, RGB_MIN, RGB_MAX } from './constants.js';
 import {
   parseSupport,
@@ -75,16 +75,21 @@ export function describeBulb(bulb) {
   }
 
   if (supportsTemperature(support)) {
-    const range = temperatureRange(bulb.model);
+    // The model gives the range in Kelvin; Gladys wants mired. The bounds swap
+    // in the conversion (coldest Kelvin = smallest mired), which is what keeps
+    // the slider running the same way as its cold→warm gradient.
+    const range = kelvinRangeToMired(temperatureRange(bulb.model));
     features.push({
       key: FEATURE_KEYS.TEMPERATURE,
       category: DEVICE_FEATURE_CATEGORIES.LIGHT,
       type: LIGHT_TYPES.TEMPERATURE,
       readOnly: false,
       keepHistory: true,
-      // Kelvin, the unit Yeelight speaks natively. The Gladys slider is driven
-      // by these bounds, so no mired round-trip is needed.
-      unit: DEVICE_FEATURE_UNITS.KELVIN,
+      // No unit is declared, deliberately: mired is the scale the core's
+      // `light.temperature` features are built on (Philips Hue exposes 153-500,
+      // Tasmota 123-500) and neither declares a unit, because the SDK has no
+      // mired constant. Declaring KELVIN here was the bug — it labelled a mired
+      // value as Kelvin and ran the slider backwards.
       min: range.min,
       max: range.max,
     });
@@ -143,30 +148,57 @@ export function describeBulb(bulb) {
   return features;
 }
 
-// Human-readable suffix per feature key, appended to the bulb name so a device
-// carrying five features stays readable in the Gladys UI.
+// Name of each feature, as shown in the Gladys UI.
+//
+// The device name is NOT repeated here. Gladys already displays a feature under
+// its device — in the device list, in a dashboard box, in the scene editor — so
+// prefixing every label with the bulb name produced rows reading "Salon - Salon
+// - brightness". The label alone says which dimension it is; the surrounding UI
+// says which lamp.
+//
+// A device carrying a background light gets two of everything, so those labels
+// are explicit about WHICH light they drive: the plain ones are the main light,
+// the `bg_*` ones say "ambient". Leaving "Colour" and "Colour" side by side was
+// unusable on a ceiling light with an ambient ring.
 const FEATURE_LABELS = {
-  [FEATURE_KEYS.POWER]: 'on/off',
-  [FEATURE_KEYS.BRIGHTNESS]: 'brightness',
-  [FEATURE_KEYS.COLOR]: 'color',
-  [FEATURE_KEYS.TEMPERATURE]: 'color temperature',
-  [FEATURE_KEYS.BACKGROUND_POWER]: 'ambient light',
-  [FEATURE_KEYS.BACKGROUND_BRIGHTNESS]: 'ambient brightness',
-  [FEATURE_KEYS.BACKGROUND_COLOR]: 'ambient color',
-  [FEATURE_KEYS.NIGHT_LIGHT]: 'night light',
+  [FEATURE_KEYS.POWER]: 'Main light',
+  [FEATURE_KEYS.BRIGHTNESS]: 'Main brightness',
+  [FEATURE_KEYS.COLOR]: 'Main colour',
+  [FEATURE_KEYS.TEMPERATURE]: 'Main colour temperature',
+  [FEATURE_KEYS.BACKGROUND_POWER]: 'Ambient light',
+  [FEATURE_KEYS.BACKGROUND_BRIGHTNESS]: 'Ambient brightness',
+  [FEATURE_KEYS.BACKGROUND_COLOR]: 'Ambient colour',
+  [FEATURE_KEYS.NIGHT_LIGHT]: 'Night light',
+};
+
+// Labels used when the bulb has no ambient light at all. Saying "Main" only
+// makes sense when there is something else to tell it apart from; on a plain
+// colour bulb it is noise.
+const SINGLE_LIGHT_LABELS = {
+  [FEATURE_KEYS.POWER]: 'On/Off',
+  [FEATURE_KEYS.BRIGHTNESS]: 'Brightness',
+  [FEATURE_KEYS.COLOR]: 'Colour',
+  [FEATURE_KEYS.TEMPERATURE]: 'Colour temperature',
 };
 
 /**
  * Build the display name of one feature.
- * @param {string} bulbName - The device name.
+ *
+ * `hasAmbient` switches between the two label sets: a bulb with a background
+ * light needs "Main"/"Ambient" to be readable, a plain bulb does not.
  * @param {object} descriptor - The feature descriptor.
+ * @param {object} [options] - Naming options.
+ * @param {boolean} [options.hasAmbient] - True when the bulb also has an ambient light.
  * @returns {string} The feature name.
  * @example
- * featureName('Living room', { key: 'brightness' }); // 'Living room - brightness'
+ * featureName({ key: 'brightness' }); // 'Brightness'
+ * featureName({ key: 'brightness' }, { hasAmbient: true }); // 'Main brightness'
  */
-export function featureName(bulbName, descriptor) {
-  const label = FEATURE_LABELS[descriptor.key] || descriptor.key;
-  return `${bulbName} - ${label}`;
+export function featureName(descriptor, { hasAmbient = false } = {}) {
+  if (!hasAmbient && SINGLE_LIGHT_LABELS[descriptor.key]) {
+    return SINGLE_LIGHT_LABELS[descriptor.key];
+  }
+  return FEATURE_LABELS[descriptor.key] || descriptor.key;
 }
 
 /**

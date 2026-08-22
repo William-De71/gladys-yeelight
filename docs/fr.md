@@ -88,6 +88,21 @@ Une Yeelight n'a pas d'état « 0 % » : le zéro, c'est l'extinction. Régler l
 
 Quand une lampe est en mode blanc (température de couleur), elle continue de mémoriser la dernière couleur utilisée. Gladys ne l'affiche volontairement pas comme couleur active, pour ne pas montrer une couleur que la lampe n'a pas.
 
+### Les plafonniers ont deux lumières indépendantes
+
+Un plafonnier avec rétroéclairage (ceiling10, barres lumineuses…) expose **deux lumières séparées**, et Gladys les nomme explicitement :
+
+- **Lumière principale**, **Luminosité principale**, **Couleur principale**, **Température de couleur principale** ;
+- **Lumière d'ambiance**, **Luminosité d'ambiance**, **Couleur d'ambiance**.
+
+Chacune s'allume et s'éteint indépendamment de l'autre. Pour piloter les deux d'un seul geste, créez une **scène** Gladys qui agit sur les deux interrupteurs : c'est la façon prévue par Gladys de grouper plusieurs commandes.
+
+Sur une lampe sans rétroéclairage, il n'y a qu'une lumière et les libellés restent simples (**On/Off**, **Luminosité**, **Couleur**, **Température de couleur**).
+
+### La température de couleur
+
+Le curseur de température suit le dégradé de Gladys : **vers la gauche, une lumière froide et bleutée ; vers la droite, une lumière chaude et orangée.** L'intégration convertit automatiquement cette valeur vers les Kelvin que comprend la lampe, en respectant la plage réelle de votre modèle (2700–6500 K sur un plafonnier, 1700–6500 K sur une ampoule couleur).
+
 ### Limites des lampes
 
 Chaque lampe accepte **4 connexions simultanées** et **60 commandes par minute**. L'intégration n'ouvre qu'une seule connexion par lampe et lisse automatiquement les rafales de commandes, mais gardez ces limites en tête si vous pilotez aussi vos lampes depuis d'autres applications en parallèle.

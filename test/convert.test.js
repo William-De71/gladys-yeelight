@@ -7,6 +7,8 @@ import {
   effectArgs,
   clamp,
   hsvToRgbInteger,
+  kelvinMiredSwap,
+  kelvinRangeToMired,
   FEATURE_KEYS,
 } from '../src/yeelight/convert.js';
 
@@ -41,10 +43,33 @@ test('colour, temperature and brightness are flagged as needing the light on', (
   assert.equal(buildCommand({ key: FEATURE_KEYS.POWER }, 1).requiresPower, undefined);
 });
 
-test('the colour temperature is clamped to the range of the model', () => {
-  const descriptor = { key: FEATURE_KEYS.TEMPERATURE, min: 2700, max: 6500 };
-  assert.equal(buildCommand(descriptor, 9000).params[0], 6500);
-  assert.equal(buildCommand(descriptor, 1000).params[0], 2700);
+test('the colour temperature is clamped in mired, then sent in Kelvin', () => {
+  // The descriptor bounds are mired (see mapping.js): 154 is the cold end,
+  // 370 the warm one. Clamping has to happen BEFORE the conversion, otherwise a
+  // Kelvin value gets compared against mired bounds.
+  const descriptor = { key: FEATURE_KEYS.TEMPERATURE, min: 154, max: 370 };
+  // Past the warm end: clamped to 370 mired = 2703K.
+  assert.equal(buildCommand(descriptor, 900).params[0], 2703);
+  // Past the cold end: clamped to 154 mired = 6494K.
+  assert.equal(buildCommand(descriptor, 10).params[0], 6494);
+  // In range: 250 mired = 4000K.
+  assert.equal(buildCommand(descriptor, 250).params[0], 4000);
+});
+
+test('a mired value round-trips through Kelvin and back', () => {
+  // The conversion is its own inverse, which is what keeps the value the user
+  // set and the value the bulb reports back from drifting apart.
+  for (const mired of [154, 200, 250, 300, 370]) {
+    const kelvin = kelvinMiredSwap(mired);
+    assert.ok(Math.abs(kelvinMiredSwap(kelvin) - mired) <= 1);
+  }
+});
+
+test('a Kelvin range converts into a mired range with its bounds swapped', () => {
+  // The coldest Kelvin is the SMALLEST mired: converting bound by bound without
+  // swapping would build a range whose min sits above its max.
+  assert.deepEqual(kelvinRangeToMired({ min: 2700, max: 6500 }), { min: 154, max: 370 });
+  assert.deepEqual(kelvinRangeToMired({ min: 1700, max: 6500 }), { min: 154, max: 588 });
 });
 
 test('a colour is a single 0xRRGGBB integer, clamped to the valid range', () => {
@@ -110,7 +135,31 @@ test('a colour read in temperature mode is not published', () => {
 test('numeric properties arrive as strings and are converted', () => {
   // Section 4.3: "all values are String type", even the numeric ones.
   assert.equal(readState({ key: FEATURE_KEYS.BRIGHTNESS }, { bright: '42' }), 42);
-  assert.equal(readState({ key: FEATURE_KEYS.TEMPERATURE }, { ct: '4000' }), 4000);
+  // The bulb reports Kelvin, Gladys stores mired: 4000K -> 250 mired.
+  assert.equal(readState({ key: FEATURE_KEYS.TEMPERATURE }, { ct: '4000' }), 250);
+});
+
+test('the ambient colour is published in HSV mode too', () => {
+  // The ambient ring of a ceiling light sits in mode 3 as soon as the Yeelight
+  // app sets a colour on it. Skipping mode 3 here kept those changes from ever
+  // reaching Gladys, while the main light handled them.
+  assert.equal(
+    readState({ key: FEATURE_KEYS.BACKGROUND_COLOR }, { bg_rgb: '16641023', bg_lmode: '3' }),
+    16641023,
+  );
+  // Falls back to hue/sat when the firmware only reports those.
+  assert.equal(
+    readState(
+      { key: FEATURE_KEYS.BACKGROUND_COLOR },
+      { bg_lmode: '3', bg_hue: '0', bg_sat: '100' },
+    ),
+    16711680,
+  );
+  // CT mode still publishes nothing: `bg_rgb` is stale there.
+  assert.equal(
+    readState({ key: FEATURE_KEYS.BACKGROUND_COLOR }, { bg_rgb: '16711680', bg_lmode: '2' }),
+    undefined,
+  );
 });
 
 test('an absent property publishes nothing rather than a placeholder', () => {

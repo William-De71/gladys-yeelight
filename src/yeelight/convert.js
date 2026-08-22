@@ -17,6 +17,15 @@
 //      Those commands are flagged `requiresPower`, and the caller powers the
 //      bulb on before sending them — so dragging a slider on a light that is
 //      off turns it on, instead of doing nothing.
+//   4. COLOR TEMPERATURE is Kelvin on the Yeelight side and MIRED on the Gladys
+//      side. This is not a cosmetic choice: Gladys renders a `light.temperature`
+//      slider with a fixed blue→orange gradient, i.e. it assumes the value grows
+//      as the light gets WARMER. Kelvin runs the other way (2700K is warm, 6500K
+//      is cold), so publishing Kelvin gives a slider that is visually reversed
+//      and whose values land outside the range the core expects. Mired
+//      (1e6/Kelvin) is what the native integrations use — Philips Hue exposes
+//      153-500, Tasmota 123-500 — and it grows towards warm, matching the
+//      gradient. Every value crossing this module is converted.
 // -----------------------------------------------------------------------------
 
 import { DEVICE_FEATURE_TYPES } from '@gladysassistant/integration-sdk';
@@ -65,6 +74,45 @@ export function clamp(value, min, max) {
 }
 
 /**
+ * Convert a colour temperature between Kelvin and mired.
+ *
+ * The relation is its own inverse (mired = 1e6 / kelvin, and back), which is
+ * exactly why one function serves both directions. Converting is what keeps the
+ * Gladys slider — whose gradient runs cold→warm left to right — in the same
+ * direction as the value, since mired grows as the light gets warmer while
+ * Kelvin shrinks.
+ * @param {number} value - A temperature in Kelvin, or in mired.
+ * @returns {number} The same temperature in the other unit, rounded.
+ * @example
+ * kelvinMiredSwap(2700); // 370
+ * kelvinMiredSwap(370); // 2703
+ */
+export function kelvinMiredSwap(value) {
+  const number = Number(value);
+  // A zero or negative temperature has no reciprocal; refuse it rather than
+  // returning Infinity, which would poison a feature range.
+  if (!Number.isFinite(number) || number <= 0) {
+    return undefined;
+  }
+  return Math.round(1e6 / number);
+}
+
+/**
+ * Convert a Kelvin range into the equivalent mired range.
+ *
+ * The bounds SWAP: the coldest Kelvin is the smallest mired, so a naive
+ * per-bound conversion would produce a range whose min is above its max and a
+ * slider the core rejects.
+ * @param {{ min: number, max: number }} range - The Kelvin range.
+ * @returns {{ min: number, max: number }} The mired range.
+ * @example
+ * kelvinRangeToMired({ min: 2700, max: 6500 }); // { min: 154, max: 370 }
+ */
+export function kelvinRangeToMired({ min, max }) {
+  return { min: kelvinMiredSwap(max), max: kelvinMiredSwap(min) };
+}
+
+/**
  * Build the effect/duration pair every Yeelight setter takes as its last
  * arguments.
  * @param {number} transitionMs - The requested transition, in milliseconds.
@@ -102,6 +150,11 @@ export function buildCommand(descriptor, value, { transitionMs = 500 } = {}) {
 
   switch (descriptor.key) {
     case FEATURE_KEYS.POWER:
+      // No `mode` argument on purpose. Mode 1 would force the main light into
+      // CT and drop whatever colour it was showing, and mode 5 is moonlight —
+      // both are a state change the user did not ask for when they only pressed
+      // on/off. Omitting it makes the bulb restore its own last state, which is
+      // what every other controller does.
       return {
         method: 'set_power',
         params: [numeric ? 'on' : 'off', effect, duration],
@@ -133,8 +186,12 @@ export function buildCommand(descriptor, value, { transitionMs = 500 } = {}) {
     }
 
     case FEATURE_KEYS.TEMPERATURE: {
-      // Bounds are the bulb's own (see models.js); the descriptor carries them.
-      const kelvin = clamp(numeric, descriptor.min, descriptor.max);
+      // Gladys speaks mired, the bulb speaks Kelvin. Clamp on the MIRED side
+      // first, using the descriptor bounds (which are mired too, see mapping.js)
+      // — clamping after the conversion would compare a Kelvin value against
+      // mired bounds and pin every request to one end of the range.
+      const mired = clamp(numeric, descriptor.min, descriptor.max);
+      const kelvin = kelvinMiredSwap(mired);
       return { method: 'set_ct_abx', params: [kelvin, effect, duration], requiresPower: true };
     }
 
@@ -165,6 +222,11 @@ export function buildCommand(descriptor, value, { transitionMs = 500 } = {}) {
     case FEATURE_KEYS.NIGHT_LIGHT:
       // Mode 5 of set_power is the documented way into moonlight. Leaving it
       // means going back to the normal mode, which is mode 1 (CT).
+      //
+      // Both directions send `on` by design: `set_power` is the only way to
+      // switch mode, and mode 5 IS the light being on in moonlight. Turning the
+      // night light off therefore means "go back to normal white", not "switch
+      // the lamp off" — the on/off feature is what switches the lamp.
       return {
         method: 'set_power',
         params: numeric ? ['on', effect, duration, 5] : ['on', effect, duration, 1],
@@ -195,8 +257,11 @@ export function readState(descriptor, props) {
     case FEATURE_KEYS.BRIGHTNESS:
       return readNumber(props.bright);
 
-    case FEATURE_KEYS.TEMPERATURE:
-      return readNumber(props.ct);
+    case FEATURE_KEYS.TEMPERATURE: {
+      // The bulb reports Kelvin; Gladys stores mired.
+      const kelvin = readNumber(props.ct);
+      return kelvin === undefined ? undefined : kelvinMiredSwap(kelvin);
+    }
 
     case FEATURE_KEYS.COLOR: {
       // `rgb` only reflects reality while the bulb shows a COLOUR: in CT mode
@@ -234,9 +299,25 @@ export function readState(descriptor, props) {
       return readNumber(props.bg_bright);
 
     case FEATURE_KEYS.BACKGROUND_COLOR: {
+      // Same rules as the main light: `bg_rgb` is only meaningful outside CT
+      // mode, and HSV (mode 3) IS a colour — the ambient ring of a ceiling
+      // light sits in mode 3 as soon as the Yeelight app sets a colour on it,
+      // so skipping mode 3 here is what kept those changes from ever reaching
+      // Gladys.
       const mode = readNumber(props.bg_lmode);
       if (mode === COLOR_MODE_TEMPERATURE) {
         return undefined;
+      }
+      if (mode === COLOR_MODE_HSV) {
+        const rgb = readNumber(props.bg_rgb);
+        if (rgb !== undefined) {
+          return rgb;
+        }
+        const hue = readNumber(props.bg_hue);
+        const saturation = readNumber(props.bg_sat);
+        return hue === undefined || saturation === undefined
+          ? undefined
+          : hsvToRgbInteger(hue, saturation);
       }
       return readNumber(props.bg_rgb);
     }
@@ -345,6 +426,9 @@ export function propsForFeatures(descriptors) {
       case FEATURE_KEYS.BACKGROUND_COLOR:
         props.add('bg_rgb');
         props.add('bg_lmode');
+        // Fallback for a firmware that only reports hue/sat in HSV mode.
+        props.add('bg_hue');
+        props.add('bg_sat');
         break;
       case FEATURE_KEYS.NIGHT_LIGHT:
         props.add('active_mode');
