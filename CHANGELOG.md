@@ -1,3 +1,9 @@
+## [1.2.0](https://github.com/William-De71/gladys-yeelight/compare/v1.1.0...v1.2.0) (2026-08-23)
+
+### Bug Fixes
+
+* **yeelight:** publish the real state instead of waiting for a push ([e970afd](https://github.com/William-De71/gladys-yeelight/commit/e970afdaf250f665ed8f77124f5e56132ab0f6c0))
+
 ## [1.1.0](https://github.com/William-De71/gladys-yeelight/compare/v1.0.1...v1.1.0) (2026-08-22)
 
 ### Bug Fixes
