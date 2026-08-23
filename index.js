@@ -20,6 +20,7 @@ import {
   buildDiscoveredDevices,
   publishBulbState,
   publishBulbTransport,
+  refreshAllDevices,
   refreshDevice,
   setDeviceValue,
 } from './src/devices.js';
@@ -51,6 +52,13 @@ async function publishDevices() {
   const devices = await buildDiscoveredDevices(gladys, manager, config);
   await gladys.publishDiscoveredDevices(devices);
 
+  // Read the real state of the lamps the user already created. A Yeelight only
+  // pushes a property when it CHANGES, so nothing at all would reach Gladys
+  // until each feature happened to be moved once.
+  await refreshAllDevices(gladys, manager).catch((e) =>
+    logger.debug(`Initial state refresh failed: ${e.message}`),
+  );
+
   if (devices.length > 0) {
     await gladys.setConnectionStatus(true).catch(() => {});
   } else {
@@ -81,6 +89,29 @@ gladys.onSetValue(async (device, feature, value) => {
 // whose session dropped and re-reads its properties.
 gladys.onPoll(async (device) => {
   await refreshDevice(gladys, manager, device);
+});
+
+// --- Device created by the user ----------------------------------------------
+// `gladys.devices` is what publishBulbState looks a feature up in, and it is
+// only filled by getDevices(). A lamp created after startup would therefore
+// have every pushed state dropped until the next restart — so the list is
+// reloaded and the new device is given its current state right away.
+gladys.onDeviceCreated(async (device) => {
+  logger.info(`onDeviceCreated -> ${device.external_id}`);
+  await gladys.getDevices();
+  await refreshDevice(gladys, manager, device).catch((e) =>
+    logger.warn(`Initial state of "${device.external_id}" unavailable: ${e.message}`),
+  );
+});
+
+// --- Device updated or deleted by the user -----------------------------------
+// Same reason: the cached list must not keep describing devices that changed.
+gladys.onDeviceUpdated(async () => {
+  await gladys.getDevices();
+});
+
+gladys.onDeviceDeleted(async () => {
+  await gladys.getDevices();
 });
 
 // --- Manifest action: test the connection ------------------------------------

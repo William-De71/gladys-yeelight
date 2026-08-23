@@ -76,12 +76,12 @@
         "fr": "Lampes ajoutées à la main"
       },
       "description": {
-        "en": "One address per line (`192.168.1.42`, or `192.168.1.42:55443`). Give these lights a fixed address in your router: unlike a light found by the scan, one added by hand is identified by its address, and a new DHCP lease would make Gladys see it as a different light.",
-        "fr": "Une adresse par ligne (`192.168.1.42`, ou `192.168.1.42:55443`). Donnez à ces lampes une adresse fixe dans votre routeur : contrairement à une lampe trouvée par le scan, une lampe ajoutée à la main est identifiée par son adresse, et un nouveau bail DHCP ferait voir à Gladys une lampe différente."
+        "en": "One address per light (`192.168.1.42`, or `192.168.1.42:55443`), separated by a comma. Give these lights a fixed address in your router: unlike a light found by the scan, one added by hand is identified by its address, and a new DHCP lease would make Gladys see it as a different light.",
+        "fr": "Une adresse par lampe (`192.168.1.42`, ou `192.168.1.42:55443`), séparées par une virgule. Donnez à ces lampes une adresse fixe dans votre routeur : contrairement à une lampe trouvée par le scan, une lampe ajoutée à la main est identifiée par son adresse, et un nouveau bail DHCP ferait voir à Gladys une lampe différente."
       },
       "placeholder": {
-        "en": "192.168.1.42\n192.168.1.43:55443",
-        "fr": "192.168.1.42\n192.168.1.43:55443"
+        "en": "192.168.1.42, 192.168.1.43:55443",
+        "fr": "192.168.1.42, 192.168.1.43:55443"
       },
       "required": false
     },

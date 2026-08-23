@@ -40,3 +40,23 @@ test('a non-string field yields no bulb', () => {
   assert.deepEqual(parseBulbs(undefined), []);
   assert.deepEqual(parseBulbs(42), []);
 });
+
+test('several lights fit in the single-line field the manifest renders', () => {
+  // The field is a plain `string` input: a newline cannot be typed into it, so a
+  // user with two hand-declared lamps needs a separator they can actually enter.
+  const expected = [
+    { host: '192.168.0.200', port: 55443 },
+    { host: '192.168.0.201', port: 55444 },
+  ];
+  assert.deepEqual(parseBulbs('192.168.0.200, 192.168.0.201:55444'), expected);
+  assert.deepEqual(parseBulbs('192.168.0.200;192.168.0.201:55444'), expected);
+  // Newlines keep working for anyone who pasted a list.
+  assert.deepEqual(parseBulbs('192.168.0.200\n192.168.0.201:55444'), expected);
+  // Mixed separators and stray whitespace collapse the same way.
+  assert.deepEqual(parseBulbs(' 192.168.0.200 ,, 192.168.0.201:55444 '), expected);
+});
+
+test('a colon still introduces the port, never a new address', () => {
+  // Splitting on ':' would have torn "192.168.0.200:55443" into two bogus hosts.
+  assert.deepEqual(parseBulbs('192.168.0.200:55443'), [{ host: '192.168.0.200', port: 55443 }]);
+});

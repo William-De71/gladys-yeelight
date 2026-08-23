@@ -7,6 +7,7 @@ import {
   featureKeyOf,
   parseDeviceExternalId,
   publishBulbTransport,
+  refreshAllDevices,
 } from '../src/devices.js';
 import { fakeGladys } from './helpers/fakeGladys.js';
 import { FEATURE_KEYS } from '../src/yeelight/convert.js';
@@ -198,4 +199,65 @@ test('reachability is published as a transport badge', async () => {
     gladys.published.transports.map((transport) => transport.transport),
     ['local', 'unreachable'],
   );
+});
+
+test('a command publishes the state the lamp actually landed on', async () => {
+  // A Yeelight does not push a property it considers unchanged, and a power
+  // command has side effects the push channel never reports (the ambient ring
+  // following the main light, night light moving the brightness). Reading back
+  // is what keeps the on/off button from snapping back to its old value.
+  const device = buildDevice(fakeGladys(), BULB);
+  const gladys = fakeGladys({ devices: [device] });
+  const manager = fakeManager({ power: 'on', bright: '42', ct: '4000', color_mode: '2' });
+  const feature = device.features.find((f) => f.external_id.endsWith(FEATURE_KEYS.POWER));
+
+  await setDeviceValue(gladys, manager, device, feature, 1, normalizeConfig());
+
+  assert.equal(manager.commands[0].method, 'set_power');
+  const power = gladys.published.states.find((state) =>
+    state.device_feature_external_id.endsWith(FEATURE_KEYS.POWER),
+  );
+  assert.equal(power.state, 1);
+  const brightness = gladys.published.states.find((state) =>
+    state.device_feature_external_id.endsWith(FEATURE_KEYS.BRIGHTNESS),
+  );
+  assert.equal(brightness.state, 42, 'a power command re-reads the whole lamp');
+});
+
+test('the state of the created devices is published without waiting for a push', async () => {
+  // The bug users saw after (re)adding a lamp: it is physically on, but every
+  // feature stays empty in Gladys until that feature happens to be moved once,
+  // because a bulb only ever pushes what CHANGES.
+  const device = buildDevice(fakeGladys(), BULB);
+  const gladys = fakeGladys({ devices: [device] });
+  const manager = fakeManager({ power: 'on', bright: '80', ct: '4000', color_mode: '2' });
+
+  await refreshAllDevices(gladys, manager);
+
+  const published = gladys.published.states.map((state) => [
+    state.device_feature_external_id.split(':').pop(),
+    state.state,
+  ]);
+  assert.deepEqual(published.sort(), [
+    [FEATURE_KEYS.BRIGHTNESS, 80],
+    [FEATURE_KEYS.POWER, 1],
+    [FEATURE_KEYS.TEMPERATURE, 250],
+  ]);
+});
+
+test('one unreachable lamp does not stop the others from publishing', async () => {
+  const device = buildDevice(fakeGladys(), BULB);
+  const gladys = fakeGladys({ devices: [device] });
+  const manager = fakeManager();
+  manager.getClient = () => ({
+    getProps: async () => {
+      throw new Error('bulb is unplugged');
+    },
+  });
+  manager.connect = async () => {
+    throw new Error('bulb is unplugged');
+  };
+
+  await refreshAllDevices(gladys, manager);
+  assert.deepEqual(gladys.published.states, []);
 });

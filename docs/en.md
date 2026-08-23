@@ -93,11 +93,15 @@ When a light is in white mode (color temperature), it still remembers the last c
 A ceiling light with a backlight (ceiling10, light bars…) exposes **two separate lights**, and Gladys names them explicitly:
 
 - **Main light**, **Main brightness**, **Main colour**, **Main colour temperature**;
-- **Ambient light**, **Ambient brightness**, **Ambient colour**.
+- **Ambient light**, **Ambient brightness**, **Ambient colour**, **Ambient colour temperature**.
 
 Each one switches on and off independently of the other. To drive both in one go, create a Gladys **scene** acting on both switches — that is how Gladys groups several commands.
 
+Ambient colour temperature only appears on models whose backlight can tune its white — the warm/cold slider the Yeelight app shows next to the ring's colour wheel.
+
 On a light without a backlight there is only one light, and the labels stay simple (**On/Off**, **Brightness**, **Colour**, **Colour temperature**).
+
+If your ceiling light switches its ring on and off together with the main light, that is not Gladys: it is the **"Auto on/off with the main light"** option in the Yeelight app. Turn it off to drive each light separately.
 
 ### Colour temperature
 

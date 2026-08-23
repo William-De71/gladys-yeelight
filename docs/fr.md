@@ -93,11 +93,15 @@ Quand une lampe est en mode blanc (température de couleur), elle continue de m�
 Un plafonnier avec rétroéclairage (ceiling10, barres lumineuses…) expose **deux lumières séparées**, et Gladys les nomme explicitement :
 
 - **Lumière principale**, **Luminosité principale**, **Couleur principale**, **Température de couleur principale** ;
-- **Lumière d'ambiance**, **Luminosité d'ambiance**, **Couleur d'ambiance**.
+- **Lumière d'ambiance**, **Luminosité d'ambiance**, **Couleur d'ambiance**, **Température de couleur d'ambiance**.
 
 Chacune s'allume et s'éteint indépendamment de l'autre. Pour piloter les deux d'un seul geste, créez une **scène** Gladys qui agit sur les deux interrupteurs : c'est la façon prévue par Gladys de grouper plusieurs commandes.
 
+La température de couleur d'ambiance n'apparaît que sur les modèles dont le rétroéclairage sait régler son blanc — c'est le curseur chaud/froid que l'application Yeelight affiche à côté de la roue chromatique de l'anneau.
+
 Sur une lampe sans rétroéclairage, il n'y a qu'une lumière et les libellés restent simples (**On/Off**, **Luminosité**, **Couleur**, **Température de couleur**).
+
+Si votre plafonnier allume ou éteint son anneau en même temps que la lumière principale, ce n'est pas Gladys : c'est l'option **« Marche/arrêt automatique avec la lumière principale »** de l'application Yeelight. Désactivez-la pour piloter chaque lumière séparément.
 
 ### La température de couleur
 

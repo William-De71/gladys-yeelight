@@ -127,3 +127,29 @@ test('a bulb with an ambient light says which light each feature drives', () => 
   );
   assert.equal(featureName({ key: FEATURE_KEYS.BACKGROUND_COLOR }, options), 'Ambient colour');
 });
+
+test('a ceiling light with a tunable ambient ring exposes its temperature', () => {
+  // mutmut's ceiling10 advertises bg_set_ct_abx: the Yeelight app offers a
+  // warm/cold slider on the ring, independent of the main light, and nothing in
+  // Gladys drove it before.
+  const features = describeBulb({
+    model: 'ceiling10',
+    support:
+      'get_prop set_power set_bright set_ct_abx bg_set_power bg_set_bright bg_set_rgb bg_set_ct_abx',
+  });
+  const keys = features.map((feature) => feature.key);
+  assert.ok(keys.includes(FEATURE_KEYS.BACKGROUND_TEMPERATURE));
+
+  const ambient = features.find((f) => f.key === FEATURE_KEYS.BACKGROUND_TEMPERATURE);
+  // Mired, like the main one, and inside the ceiling range (2700-6500K).
+  assert.deepEqual({ min: ambient.min, max: ambient.max }, { min: 154, max: 370 });
+  assert.equal(featureName(ambient, { hasAmbient: true }), 'Ambient colour temperature');
+});
+
+test('a ring that cannot tune its white gets no temperature feature', () => {
+  const features = describeBulb({
+    model: 'ceiling1',
+    support: 'get_prop set_power set_bright bg_set_power bg_set_rgb',
+  });
+  assert.ok(!features.some((feature) => feature.key === FEATURE_KEYS.BACKGROUND_TEMPERATURE));
+});

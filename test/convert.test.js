@@ -184,3 +184,37 @@ test('clamp rounds and bounds', () => {
   assert.equal(clamp(5.6, 1, 100), 6);
   assert.equal(clamp(-10, 1, 100), 1);
 });
+
+test('a temperature command survives a feature that declares no bounds', () => {
+  // `min`/`max` are OPTIONAL in the SDK's feature payload. When they were
+  // missing, clamp() returned NaN and `set_ct_abx` went out with a null the
+  // bulb rejects outright — the reported "temperature drives nothing".
+  const noBounds = buildCommand({ key: FEATURE_KEYS.TEMPERATURE }, 250);
+  assert.equal(noBounds.method, 'set_ct_abx');
+  assert.ok(Number.isFinite(noBounds.params[0]), 'the Kelvin value must be a real number');
+  assert.equal(noBounds.params[0], 4000);
+
+  // `null` is the nastier half of the same bug: Number(null) is 0, which IS
+  // finite, so a naive guard would clamp every temperature to zero mired.
+  const nullBounds = buildCommand({ key: FEATURE_KEYS.TEMPERATURE, min: null, max: null }, 250);
+  assert.equal(nullBounds.params[0], 4000);
+
+  // A half-declared range must not collapse into a single value either.
+  const halfBounds = buildCommand({ key: FEATURE_KEYS.TEMPERATURE, min: 154 }, 250);
+  assert.ok(Number.isFinite(halfBounds.params[0]));
+});
+
+test('the ambient light gets its own colour temperature', () => {
+  const command = buildCommand(
+    { key: FEATURE_KEYS.BACKGROUND_TEMPERATURE, min: 154, max: 370 },
+    370,
+  );
+  assert.equal(command.method, 'bg_set_ct_abx');
+  assert.equal(command.params[0], 2703);
+  assert.equal(command.requiresPower, true);
+
+  // And reads back from `bg_ct`, in mired like the main one.
+  assert.equal(readState({ key: FEATURE_KEYS.BACKGROUND_TEMPERATURE }, { bg_ct: '4000' }), 250);
+  assert.equal(readState({ key: FEATURE_KEYS.BACKGROUND_TEMPERATURE }, {}), undefined);
+  assert.ok(propsForFeatures([{ key: FEATURE_KEYS.BACKGROUND_TEMPERATURE }]).includes('bg_ct'));
+});

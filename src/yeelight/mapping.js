@@ -130,6 +130,22 @@ export function describeBulb(bulb) {
         max: RGB_MAX,
       });
     }
+    // The ambient ring of a ceiling light tunes its white independently of the
+    // main light — the Yeelight app offers a warm/cold slider next to the colour
+    // wheel — so a device advertising `bg_set_ct_abx` gets its own temperature
+    // feature rather than sharing the main one.
+    if (support.has('bg_set_ct_abx')) {
+      const bgRange = kelvinRangeToMired(temperatureRange(bulb.model));
+      features.push({
+        key: FEATURE_KEYS.BACKGROUND_TEMPERATURE,
+        category: DEVICE_FEATURE_CATEGORIES.LIGHT,
+        type: LIGHT_TYPES.TEMPERATURE,
+        readOnly: false,
+        keepHistory: true,
+        min: bgRange.min,
+        max: bgRange.max,
+      });
+    }
   }
 
   // Moonlight mode, ceiling lights only.
@@ -168,6 +184,7 @@ const FEATURE_LABELS = {
   [FEATURE_KEYS.BACKGROUND_POWER]: 'Ambient light',
   [FEATURE_KEYS.BACKGROUND_BRIGHTNESS]: 'Ambient brightness',
   [FEATURE_KEYS.BACKGROUND_COLOR]: 'Ambient colour',
+  [FEATURE_KEYS.BACKGROUND_TEMPERATURE]: 'Ambient colour temperature',
   [FEATURE_KEYS.NIGHT_LIGHT]: 'Night light',
 };
 

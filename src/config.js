@@ -20,33 +20,41 @@ export const DEFAULT_CONFIG = {
 };
 
 /**
- * Split a free-text field into trimmed, non-empty lines.
+ * Split a free-text field into trimmed, non-empty entries.
+ *
+ * Commas and semicolons separate as well as newlines, deliberately: the manifest
+ * renders this as a single-line input, where a newline cannot be typed at all.
+ * Accepting only newlines meant a user with two hand-declared lamps had no way
+ * to enter the second one.
+ *
+ * A colon is NOT a separator — it introduces the optional `:port`, and an IPv6
+ * literal is full of them.
  * @param {unknown} raw - The raw field value.
- * @returns {string[]} The meaningful lines.
+ * @returns {string[]} The meaningful entries.
  * @example
- * splitLines('192.168.1.4\n\n 192.168.1.5 '); // ['192.168.1.4', '192.168.1.5']
+ * splitEntries('192.168.1.4, 192.168.1.5'); // ['192.168.1.4', '192.168.1.5']
  */
-function splitLines(raw) {
+function splitEntries(raw) {
   if (typeof raw !== 'string') {
     return [];
   }
   return raw
-    .split(/[\r\n]+/)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
+    .split(/[\r\n,;]+/)
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
 }
 
 /**
- * Parse the "bulbs added by hand" field: one address per line, with an optional
- * `:port`. Used for the bulbs the discovery cannot reach — another VLAN, or a
- * router that drops multicast.
+ * Parse the "bulbs added by hand" field: addresses separated by a comma, a
+ * semicolon or a newline, each with an optional `:port`. Used for the bulbs the
+ * discovery cannot reach — another VLAN, or a router that drops multicast.
  * @param {unknown} raw - The raw field value.
  * @returns {Array<{ host: string, port: number }>} The manual bulbs.
  * @example
- * parseBulbs('192.168.1.42\n192.168.1.43:55443');
+ * parseBulbs('192.168.1.42, 192.168.1.43:55443');
  */
 export function parseBulbs(raw) {
-  return splitLines(raw)
+  return splitEntries(raw)
     .map((line) => {
       // An IPv6 literal is written [::1]:55443, so only split on a trailing
       // `:port` and only when what follows is a number.

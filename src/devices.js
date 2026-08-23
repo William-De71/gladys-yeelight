@@ -26,6 +26,16 @@ import {
 
 const logger = createLogger({ name: 'yeelight-devices' });
 
+// Settling time added on top of the transition before reading a state back. The
+// lamp needs a moment past the end of its fade to report the value it landed on.
+const READ_BACK_MARGIN_MS = 250;
+
+// Ceiling on that wait. `transition_duration` is user-supplied and unbounded,
+// and Gladys acks `onSetValue` within 5 s: a long fade must not turn a working
+// command into a timeout. Past this point the read-back is simply skipped — the
+// push channel still reports the change when the fade ends.
+const READ_BACK_MAX_WAIT_MS = 1500;
+
 // A scan in flight, shared by concurrent callers. The core rate-limits network
 // scans (1 per 10 s per integration), and a user clicking "Scan" twice must not
 // turn the second click into a 429 that empties the Discover screen.
@@ -103,6 +113,7 @@ export async function probeBulb(host, port = DEFAULT_CONTROL_PORT) {
       'model',
       'fw_ver',
       'bg_power',
+      'bg_ct',
     ]);
 
     return {
@@ -127,6 +138,7 @@ export async function probeBulb(host, port = DEFAULT_CONTROL_PORT) {
         props.bg_power !== undefined ? 'bg_set_power' : '',
         props.bg_power !== undefined ? 'bg_set_bright' : '',
         props.bg_power !== undefined ? 'bg_set_rgb' : '',
+        props.bg_ct !== undefined ? 'bg_set_ct_abx' : '',
       ]
         .filter(Boolean)
         .join(' '),
@@ -260,6 +272,34 @@ export async function publishBulbState(gladys, bulbId, props) {
 }
 
 /**
+ * Read and publish the CURRENT state of every device the user created.
+ *
+ * A Yeelight only pushes a property when that property CHANGES, so a lamp that
+ * is simply on says nothing when we connect to it — and says nothing about the
+ * dimensions the user did not touch. Without an explicit read at startup the
+ * dashboard stays empty until each feature happens to be moved once, which is
+ * exactly what a freshly (re)created device looks like to the user.
+ *
+ * Failures are per-device and non-fatal: one unreachable lamp must not keep the
+ * others from publishing their state.
+ * @param {object} gladys - The Gladys SDK instance.
+ * @param {object} manager - The YeelightManager instance.
+ * @returns {Promise<void>} Resolves once every reachable device is published.
+ * @example
+ * await refreshAllDevices(gladys, manager);
+ */
+export async function refreshAllDevices(gladys, manager) {
+  const devices = gladys.devices || [];
+  for (const device of devices) {
+    try {
+      await refreshDevice(gladys, manager, device);
+    } catch (e) {
+      logger.debug(`Initial state of "${device.external_id}" unavailable: ${e.message}`);
+    }
+  }
+}
+
+/**
  * Refresh a device by reading its properties over the control channel. Used by
  * `onPoll`, which is the safety net of the push model.
  * @param {object} gladys - The Gladys SDK instance.
@@ -331,6 +371,68 @@ export async function setDeviceValue(gladys, manager, device, feature, value, co
 
   logger.debug(`Yeelight command ${bulbId}: ${command.method} ${JSON.stringify(command.params)}`);
   await manager.command(bulbId, command.method, command.params);
+
+  // Read back what the lamp actually did, and publish it.
+  //
+  // A Yeelight does not push a property it considers unchanged, and a power
+  // command has SIDE EFFECTS the push channel never reports: switching the main
+  // light also drives the ambient ring when the lamp is configured to follow it,
+  // and `set_power` mode 5 (night light) moves the brightness. Relying on the
+  // push alone left those features showing a value the lamp had already left —
+  // the on/off button snapping back was this, not a lost command.
+  await readBackState(gladys, manager, bulbId, key, config.transition_duration).catch((e) =>
+    logger.debug(`Could not read back the state of "${bulbId}": ${e.message}`),
+  );
+}
+
+/**
+ * Re-read the properties a command may have moved, and publish them.
+ *
+ * The scope is deliberately wider than the feature that was commanded: the one
+ * case that matters is precisely the one where the lamp changed something the
+ * user did not ask for.
+ * @param {object} gladys - The Gladys SDK instance.
+ * @param {object} manager - The YeelightManager instance.
+ * @param {string} bulbId - The bulb id.
+ * @param {string} key - The feature key that was commanded.
+ * @returns {Promise<void>} Resolves once the fresh state is published.
+ */
+async function readBackState(gladys, manager, bulbId, key, transitionMs = 0) {
+  const client = manager.getClient(bulbId);
+  if (!client) {
+    return;
+  }
+
+  // A `smooth` command returns as soon as it is ACCEPTED, while the lamp is
+  // still fading. Reading straight away would report the value it is leaving,
+  // and publish the very state the user just changed.
+  const fade = Number.isFinite(Number(transitionMs)) ? Number(transitionMs) : 0;
+  const wait = Math.min(fade + READ_BACK_MARGIN_MS, READ_BACK_MAX_WAIT_MS);
+  await new Promise((resolve) => setTimeout(resolve, wait));
+
+  const ids = gladys.externalIds(EXTERNAL_ID_TYPE, bulbId);
+  const device = (gladys.devices || []).find((d) => d.external_id === ids.device);
+  if (!device) {
+    return;
+  }
+
+  const keys = (device.features || [])
+    .map((feature) => featureKeyOf(gladys, feature.external_id, bulbId))
+    .filter(Boolean);
+  // A power command can move any other feature, so everything is re-read; a
+  // colour or brightness command only ever moves its own light.
+  const isPower = key === 'power' || key === 'bg_power' || key === 'night_light';
+  const scope = isPower
+    ? keys
+    : keys.filter((candidate) => candidate.startsWith('bg_') === key.startsWith('bg_'));
+
+  const names = propsForFeatures(scope.map((candidate) => ({ key: candidate })));
+  if (names.length === 0) {
+    return;
+  }
+
+  const props = await client.getProps(names);
+  await publishBulbState(gladys, bulbId, props);
 }
 
 /**
@@ -354,17 +456,19 @@ async function ensurePoweredOn(manager, bulbId, key, config) {
   try {
     const client = manager.getClient(bulbId);
     if (!client) {
-      return;
+      return false;
     }
     const props = await client.getProps([property]);
     if (props[property] === 'off') {
       await manager.command(bulbId, method, ['on', 'smooth', config.transition_duration]);
+      return true;
     }
   } catch (e) {
     // Never block the real command on this: the bulb may simply not expose the
     // property, and the command below may well succeed anyway.
     logger.debug(`Could not check the power state of "${bulbId}": ${e.message}`);
   }
+  return false;
 }
 
 /**

@@ -32,6 +32,8 @@ import { DEVICE_FEATURE_TYPES } from '@gladysassistant/integration-sdk';
 import {
   BRIGHTNESS_MIN,
   BRIGHTNESS_MAX,
+  COLOR_TEMPERATURE_MIN,
+  COLOR_TEMPERATURE_MAX,
   RGB_MIN,
   RGB_MAX,
   EFFECT_SMOOTH,
@@ -55,6 +57,7 @@ export const FEATURE_KEYS = {
   BACKGROUND_POWER: 'bg_power',
   BACKGROUND_BRIGHTNESS: 'bg_brightness',
   BACKGROUND_COLOR: 'bg_color',
+  BACKGROUND_TEMPERATURE: 'bg_temperature',
   NIGHT_LIGHT: 'night_light',
 };
 
@@ -110,6 +113,56 @@ export function kelvinMiredSwap(value) {
  */
 export function kelvinRangeToMired({ min, max }) {
   return { min: kelvinMiredSwap(max), max: kelvinMiredSwap(min) };
+}
+
+/**
+ * Turn the mired value Gladys sends into the Kelvin value the bulb expects.
+ *
+ * The clamp happens on the MIRED side, before the conversion: clamping after it
+ * would compare a Kelvin value against mired bounds and pin every request to one
+ * end of the range.
+ *
+ * The bounds are NOT taken from the Gladys feature. `min`/`max` are optional in
+ * the SDK's feature payload, and when they are absent `clamp` returns NaN, which
+ * sends `set_ct_abx` a `null` the bulb rejects outright — the light simply does
+ * not move. The feature bounds are only ever a narrowing of what the model can
+ * do, so falling back to the model's own mired range is both safe and always
+ * available.
+ * @param {number} value - The mired value from Gladys.
+ * @param {object} descriptor - `{ min, max }` of the feature, both optional.
+ * @returns {number} The temperature in Kelvin, inside the usable range.
+ * @example
+ * miredToKelvin(370, { min: 154, max: 370 }); // 2703
+ * miredToKelvin(370, {}); // 2703, bounds recovered from the spec range
+ */
+export function miredToKelvin(value, descriptor = {}) {
+  const fallback = kelvinRangeToMired({
+    min: COLOR_TEMPERATURE_MIN,
+    max: COLOR_TEMPERATURE_MAX,
+  });
+  const min = usableBound(descriptor.min, fallback.min);
+  const max = usableBound(descriptor.max, fallback.max);
+  // A descriptor carrying min but not max (or the reverse) would otherwise give
+  // an inverted range that pins every request to a single value.
+  return kelvinMiredSwap(clamp(value, Math.min(min, max), Math.max(min, max)));
+}
+
+/**
+ * Read one feature bound, falling back when it carries no usable number.
+ *
+ * `null` is the trap this exists for: `Number(null)` is 0, which is finite, so a
+ * plain isFinite check would accept it as a bound and clamp every temperature to
+ * zero mired.
+ * @param {number|null|undefined} bound - The bound declared on the feature.
+ * @param {number} fallback - The bound to use when it is unusable.
+ * @returns {number} A usable bound.
+ */
+function usableBound(bound, fallback) {
+  if (bound === undefined || bound === null || bound === '') {
+    return fallback;
+  }
+  const number = Number(bound);
+  return Number.isFinite(number) && number > 0 ? number : fallback;
 }
 
 /**
@@ -186,12 +239,7 @@ export function buildCommand(descriptor, value, { transitionMs = 500 } = {}) {
     }
 
     case FEATURE_KEYS.TEMPERATURE: {
-      // Gladys speaks mired, the bulb speaks Kelvin. Clamp on the MIRED side
-      // first, using the descriptor bounds (which are mired too, see mapping.js)
-      // — clamping after the conversion would compare a Kelvin value against
-      // mired bounds and pin every request to one end of the range.
-      const mired = clamp(numeric, descriptor.min, descriptor.max);
-      const kelvin = kelvinMiredSwap(mired);
+      const kelvin = miredToKelvin(numeric, descriptor);
       return { method: 'set_ct_abx', params: [kelvin, effect, duration], requiresPower: true };
     }
 
@@ -218,6 +266,11 @@ export function buildCommand(descriptor, value, { transitionMs = 500 } = {}) {
         params: [clamp(numeric, RGB_MIN, RGB_MAX), effect, duration],
         requiresPower: true,
       };
+
+    case FEATURE_KEYS.BACKGROUND_TEMPERATURE: {
+      const kelvin = miredToKelvin(numeric, descriptor);
+      return { method: 'bg_set_ct_abx', params: [kelvin, effect, duration], requiresPower: true };
+    }
 
     case FEATURE_KEYS.NIGHT_LIGHT:
       // Mode 5 of set_power is the documented way into moonlight. Leaving it
@@ -320,6 +373,13 @@ export function readState(descriptor, props) {
           : hsvToRgbInteger(hue, saturation);
       }
       return readNumber(props.bg_rgb);
+    }
+
+    case FEATURE_KEYS.BACKGROUND_TEMPERATURE: {
+      // Same unit dance as the main light: the ring reports Kelvin in `bg_ct`,
+      // Gladys stores mired.
+      const kelvin = readNumber(props.bg_ct);
+      return kelvin === undefined ? undefined : kelvinMiredSwap(kelvin);
     }
 
     case FEATURE_KEYS.NIGHT_LIGHT: {
@@ -429,6 +489,9 @@ export function propsForFeatures(descriptors) {
         // Fallback for a firmware that only reports hue/sat in HSV mode.
         props.add('bg_hue');
         props.add('bg_sat');
+        break;
+      case FEATURE_KEYS.BACKGROUND_TEMPERATURE:
+        props.add('bg_ct');
         break;
       case FEATURE_KEYS.NIGHT_LIGHT:
         props.add('active_mode');
