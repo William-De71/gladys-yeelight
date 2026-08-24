@@ -73,6 +73,40 @@ export class YeelightClient extends EventEmitter {
     // and brightness at once must go out immediately (Gladys acks `onSetValue`
     // within 5 s), and only a genuine flood should ever wait.
     this.commandTimes = [];
+    // Last known value of each property, fed by every source that carries one:
+    // the pushed notifications, the `get_prop` replies and the commands we send.
+    // It exists to spare the bulb a `get_prop` whose answer we already know —
+    // the per-connection quota is 60 commands a minute, and a slider that
+    // queried the power state before every step burned three of them per move.
+    /** @type {Record<string, string>} */
+    this.state = {};
+  }
+
+  /**
+   * The last known value of one property, or undefined when it was never seen.
+   *
+   * Deliberately NOT a promise: a caller that cannot answer from the cache is
+   * expected to fall back to `getProps`, which refreshes it.
+   * @param {string} name - The property name.
+   * @returns {string|undefined} The cached value.
+   * @example
+   * client.cached('power'); // 'on'
+   */
+  cached(name) {
+    return this.state[name];
+  }
+
+  /**
+   * Record property values into the cache.
+   * @param {Record<string, string|number>} props - The properties to remember.
+   * @returns {void}
+   */
+  remember(props) {
+    Object.entries(props || {}).forEach(([name, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        this.state[name] = String(value);
+      }
+    });
   }
 
   /**
@@ -160,6 +194,7 @@ export class YeelightClient extends EventEmitter {
 
     // A notification has a method and no id. This is the push path.
     if (message.method === 'props' && message.params) {
+      this.remember(message.params);
       this.emit('props', message.params);
       return;
     }
@@ -187,6 +222,9 @@ export class YeelightClient extends EventEmitter {
     this.connected = false;
     this.socket = null;
     this.buffer = '';
+    // The lamp may be power-cycled while we are away, so nothing survives the
+    // drop: a stale `power` would let a command skip the power-on it needed.
+    this.state = {};
 
     this.pending.forEach((pending) => {
       clearTimeout(pending.timer);
@@ -214,7 +252,11 @@ export class YeelightClient extends EventEmitter {
   command(method, params = []) {
     const run = async () => {
       await this.awaitQuota();
-      return this.send(method, params);
+      const result = await this.send(method, params);
+      // Only once the bulb ACKED it: a command that failed changed nothing, and
+      // caching its intent would make the next call skip a power-on it needed.
+      this.rememberCommand(method, params);
+      return result;
     };
 
     // Chain onto the queue, and keep the queue alive when a command rejects:
@@ -225,6 +267,30 @@ export class YeelightClient extends EventEmitter {
       () => undefined,
     );
     return result;
+  }
+
+  /**
+   * Fold an accepted command into the cache.
+   *
+   * Only the power state is tracked, and only for the two `set_power` families:
+   * it is the single property read back before another command, so it is the
+   * only one whose staleness would cost a round trip. The values a setter
+   * carries (colour, brightness…) are left to the bulb's own push, which is
+   * authoritative — a lamp clamps what it is given.
+   * @param {string} method - The method that was accepted.
+   * @param {Array} params - The parameters it was sent with.
+   * @returns {void}
+   */
+  rememberCommand(method, params) {
+    const power = params[0] === 'on' ? 'on' : params[0] === 'off' ? 'off' : undefined;
+    if (power === undefined) {
+      return;
+    }
+    if (method === 'set_power') {
+      this.remember({ power });
+    } else if (method === 'bg_set_power') {
+      this.remember({ bg_power: power });
+    }
   }
 
   /**
@@ -309,6 +375,7 @@ export class YeelightClient extends EventEmitter {
         props[name] = value;
       }
     });
+    this.remember(props);
     return props;
   }
 

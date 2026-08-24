@@ -380,9 +380,17 @@ export async function setDeviceValue(gladys, manager, device, feature, value, co
   // and `set_power` mode 5 (night light) moves the brightness. Relying on the
   // push alone left those features showing a value the lamp had already left —
   // the on/off button snapping back was this, not a lost command.
-  await readBackState(gladys, manager, bulbId, key, config.transition_duration).catch((e) =>
-    logger.debug(`Could not read back the state of "${bulbId}": ${e.message}`),
-  );
+  //
+  // Scoped to the power commands, and that scope is the whole point: they are
+  // the ones with side effects nothing reports. A slider (colour, temperature,
+  // brightness) only moves the property it names, and the bulb PUSHES that
+  // property itself once the fade ends — reading it back spent a third command
+  // per step to learn what the push was already carrying.
+  if (movesOtherFeatures(key)) {
+    await readBackState(gladys, manager, bulbId, key, config.transition_duration).catch((e) =>
+      logger.debug(`Could not read back the state of "${bulbId}": ${e.message}`),
+    );
+  }
 }
 
 /**
@@ -421,8 +429,7 @@ async function readBackState(gladys, manager, bulbId, key, transitionMs = 0) {
     .filter(Boolean);
   // A power command can move any other feature, so everything is re-read; a
   // colour or brightness command only ever moves its own light.
-  const isPower = key === 'power' || key === 'bg_power' || key === 'night_light';
-  const scope = isPower
+  const scope = movesOtherFeatures(key)
     ? keys
     : keys.filter((candidate) => candidate.startsWith('bg_') === key.startsWith('bg_'));
 
@@ -433,6 +440,20 @@ async function readBackState(gladys, manager, bulbId, key, transitionMs = 0) {
 
   const props = await client.getProps(names);
   await publishBulbState(gladys, bulbId, props);
+}
+
+/**
+ * Whether a command can move features other than the one it names.
+ *
+ * The power family is what this exists for: switching the main light also drives
+ * an ambient ring configured to follow it, and `set_power` mode 5 (night light)
+ * moves the brightness. Those changes reach nobody otherwise — a Yeelight does
+ * not push a property it considers unchanged.
+ * @param {string} key - The feature key that was commanded.
+ * @returns {boolean} True when the whole device state has to be re-read.
+ */
+function movesOtherFeatures(key) {
+  return key === 'power' || key === 'bg_power' || key === 'night_light';
 }
 
 /**
@@ -458,8 +479,13 @@ async function ensurePoweredOn(manager, bulbId, key, config) {
     if (!client) {
       return false;
     }
-    const props = await client.getProps([property]);
-    if (props[property] === 'off') {
+    // Ask the bulb only when nothing has told us the state yet. The client
+    // caches what the pushes, the read-backs and our own power commands report,
+    // and dragging a slider used to spend one `get_prop` per step on a value
+    // that had not moved — three commands per step against a 60/minute quota.
+    const known = client.cached(property);
+    const value = known === undefined ? (await client.getProps([property]))[property] : known;
+    if (value === 'off') {
       await manager.command(bulbId, method, ['on', 'smooth', config.transition_duration]);
       return true;
     }

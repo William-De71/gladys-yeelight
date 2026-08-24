@@ -197,3 +197,37 @@ test('connecting to a closed port rejects rather than resolving', async () => {
   const client = new YeelightClient({ host: '127.0.0.1', port: 1 });
   await assert.rejects(() => client.connect());
 });
+
+test('an accepted power command updates the cache, a failed one does not', () => {
+  // The cache spares a `get_prop` before every slider step, so a wrong value
+  // costs a real bug: a stale 'on' would skip the power-on the command needed.
+  const client = new YeelightClient({ host: '192.0.2.1' });
+
+  client.remember({ power: 'on' });
+  assert.equal(client.cached('power'), 'on');
+
+  // Only what a setter ACTUALLY carries is folded in.
+  client.rememberCommand('set_power', ['off', 'smooth', 500]);
+  assert.equal(client.cached('power'), 'off');
+  client.rememberCommand('bg_set_power', ['on', 'smooth', 500]);
+  assert.equal(client.cached('bg_power'), 'on');
+
+  // A setter that is not a power command leaves the power state alone.
+  client.rememberCommand('set_ct_abx', [4000, 'smooth', 500]);
+  assert.equal(client.cached('power'), 'off');
+
+  // An unknown property was simply never seen.
+  assert.equal(client.cached('bright'), undefined);
+});
+
+test('the cache is dropped when the connection is lost', () => {
+  // A lamp can be power-cycled while we are away: keeping a stale 'on' would
+  // let the next command skip a power-on it needed.
+  const client = new YeelightClient({ host: '192.0.2.1' });
+  client.connected = true;
+  client.remember({ power: 'on' });
+
+  client.handleClose();
+
+  assert.equal(client.cached('power'), undefined);
+});

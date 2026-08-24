@@ -28,7 +28,7 @@ const BULB = {
  * @param {object} [props] - Properties the fake client reports.
  * @returns {object} The fake manager, with a `commands` log.
  */
-function fakeManager(props = {}) {
+function fakeManager(props = {}, cachedProps = {}) {
   const commands = [];
   return {
     commands,
@@ -46,6 +46,10 @@ function fakeManager(props = {}) {
         });
         return result;
       },
+      // Nothing cached by default, so the callers fall back to `getProps` and
+      // the tests keep exercising the querying path. `cachedProps` is what the
+      // tests that DO care about the cache set.
+      cached: (name) => cachedProps[name],
     }),
     command: async (bulbId, method, params) => {
       commands.push({ bulbId, method, params });
@@ -222,6 +226,41 @@ test('a command publishes the state the lamp actually landed on', async () => {
     state.device_feature_external_id.endsWith(FEATURE_KEYS.BRIGHTNESS),
   );
   assert.equal(brightness.state, 42, 'a power command re-reads the whole lamp');
+});
+
+test('a slider costs one single command against the quota', async () => {
+  // The bulb allows 60 commands a minute per connection and enforces it by
+  // going silent. A slider used to spend three per step — a `get_prop` for the
+  // power state, the setter, then a read-back — so about 18 moves a minute
+  // saturated it and the logs filled with "Command quota reached".
+  const device = buildDevice(fakeGladys(), BULB);
+  const gladys = fakeGladys({ devices: [device] });
+  // The lamp is known to be on, so no power query and no power-on are needed.
+  const manager = fakeManager({ power: 'on' }, { power: 'on' });
+  const feature = device.features.find((f) => f.external_id.endsWith(FEATURE_KEYS.TEMPERATURE));
+
+  await setDeviceValue(gladys, manager, device, feature, 250, normalizeConfig());
+
+  assert.deepEqual(
+    manager.commands.map((command) => command.method),
+    ['set_ct_abx'],
+  );
+});
+
+test('a slider still powers on a lamp the cache knows to be off', async () => {
+  // The saving must not cost the power-on: a cached 'off' is as good a reason
+  // to switch the lamp on as a queried one.
+  const device = buildDevice(fakeGladys(), BULB);
+  const gladys = fakeGladys({ devices: [device] });
+  const manager = fakeManager({ power: 'off' }, { power: 'off' });
+  const feature = device.features.find((f) => f.external_id.endsWith(FEATURE_KEYS.TEMPERATURE));
+
+  await setDeviceValue(gladys, manager, device, feature, 250, normalizeConfig());
+
+  assert.deepEqual(
+    manager.commands.map((command) => command.method),
+    ['set_power', 'set_ct_abx'],
+  );
 });
 
 test('the state of the created devices is published without waiting for a push', async () => {
