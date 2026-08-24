@@ -74,7 +74,7 @@ export function describeBulb(bulb) {
     });
   }
 
-  if (supportsTemperature(support)) {
+  if (supportsTemperature(support, bulb.model)) {
     // The model gives the range in Kelvin; Gladys wants mired. The bounds swap
     // in the conversion (coldest Kelvin = smallest mired), which is what keeps
     // the slider running the same way as its cold→warm gradient.

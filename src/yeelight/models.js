@@ -62,6 +62,19 @@ const MODEL_TEMPERATURE_RANGES = {
   lamp15: { min: 2700, max: 6500 },
 };
 
+// Models whose firmware advertises `set_ct_abx` without owning a white LED.
+// They accept the command, answer `ok`, and change nothing: `ct` stays pinned at
+// 6500 and `color_mode` stays in colour mode whatever Kelvin value is sent.
+// Verified on a LED Lightstrip 1S (`strip6`, firmware 20) by sweeping the whole
+// range and reading the properties back after each step.
+//
+// The plain colour bulbs and the older strips are deliberately NOT here: they do
+// have a real tunable white.
+const NO_REAL_TEMPERATURE = new Set([
+  // LED Lightstrip 1S — RGB only, no white channel.
+  'strip6',
+]);
+
 /**
  * Resolve the color temperature range of a model, in Kelvin.
  * @param {string|undefined} model - The `model` header of the discovery reply.
@@ -93,10 +106,21 @@ export function parseSupport(support) {
 
 /**
  * Whether the bulb can change its color temperature.
+ *
+ * The support list alone is NOT enough here, and this is the one place where it
+ * has to be second-guessed. An RGB-only strip has no white LED at all, yet its
+ * firmware advertises `set_ct_abx`, answers `ok` to it and leaves `ct` frozen at
+ * 6500 while staying in colour mode — the command is accepted and discarded.
+ * Trusting the advertisement gave Gladys a temperature slider that could not
+ * move the light, so those models are excluded by name.
  * @param {Set<string>} support - The parsed support set.
- * @returns {boolean} True when `set_ct_abx` is supported.
+ * @param {string|undefined} [model] - The `model` header, when it is known.
+ * @returns {boolean} True when the bulb really has a tunable white.
  */
-export function supportsTemperature(support) {
+export function supportsTemperature(support, model) {
+  if (NO_REAL_TEMPERATURE.has(String(model || '').toLowerCase())) {
+    return false;
+  }
   return support.has('set_ct_abx');
 }
 

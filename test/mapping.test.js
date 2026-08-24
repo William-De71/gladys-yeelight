@@ -60,6 +60,35 @@ test('the temperature range follows the model, in Kelvin', () => {
   assert.deepEqual(temperatureRange('brand-new'), { min: 1700, max: 6500 });
 });
 
+test('an RGB-only strip gets no temperature feature despite advertising set_ct_abx', () => {
+  // A LED Lightstrip 1S (strip6) has no white LED. Its firmware still lists
+  // `set_ct_abx`, answers `ok` to it and leaves `ct` frozen at 6500 in colour
+  // mode — so trusting the support list published a slider that moved nothing.
+  const features = describeBulb({
+    model: 'strip6',
+    support: 'get_prop set_power toggle set_bright set_rgb set_ct_abx',
+  });
+  assert.equal(
+    features.some((feature) => feature.key === FEATURE_KEYS.TEMPERATURE),
+    false,
+  );
+  // The colour feature it DOES own must survive the exclusion.
+  assert.equal(
+    features.some((feature) => feature.key === FEATURE_KEYS.COLOR),
+    true,
+  );
+});
+
+test('a colour bulb keeps its temperature feature', () => {
+  // The exclusion is by model name and must not spill onto the models that do
+  // have a real tunable white.
+  const features = describeBulb({ model: 'color', support: 'set_rgb set_ct_abx' });
+  assert.equal(
+    features.some((feature) => feature.key === FEATURE_KEYS.TEMPERATURE),
+    true,
+  );
+});
+
 test('the temperature feature is published in mired, not in Kelvin', () => {
   // Gladys renders `light.temperature` with a fixed cold->warm gradient, so the
   // value has to GROW towards warm. Kelvin runs the other way; mired is what
