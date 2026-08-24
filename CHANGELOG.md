@@ -1,3 +1,13 @@
+## [1.2.1](https://github.com/William-De71/gladys-yeelight/compare/v1.2.0...v1.2.1) (2026-08-24)
+
+### Bug Fixes
+
+* **yeelight:** hide the temperature of the strips that have no white LED ([9e7fd11](https://github.com/William-De71/gladys-yeelight/commit/9e7fd1182eced045fd9534c12728e8d84c5a3eeb))
+
+### Performance
+
+* **yeelight:** spend one command per slider step instead of three ([c92457a](https://github.com/William-De71/gladys-yeelight/commit/c92457a2db27865df459fb9542f6fc8e8139fc32))
+
 ## [1.2.0](https://github.com/William-De71/gladys-yeelight/compare/v1.1.0...v1.2.0) (2026-08-23)
 
 ### Bug Fixes
