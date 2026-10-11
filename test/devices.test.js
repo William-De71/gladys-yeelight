@@ -8,8 +8,10 @@ import {
   parseDeviceExternalId,
   publishBulbTransport,
   refreshAllDevices,
+  discoverAllBulbs,
 } from '../src/devices.js';
-import { fakeGladys } from './helpers/fakeGladys.js';
+import net from 'node:net';
+import { fakeGladys, discoveryPayload } from './helpers/fakeGladys.js';
 import { FEATURE_KEYS } from '../src/yeelight/convert.js';
 import { normalizeConfig } from '../src/config.js';
 
@@ -33,8 +35,8 @@ function fakeManager(props = {}, cachedProps = {}) {
   return {
     commands,
     addresses: [],
-    rememberAddress(bulb) {
-      this.addresses.push(bulb);
+    rememberAddress(bulb, options) {
+      this.addresses.push({ ...bulb, ...options });
     },
     getClient: () => ({
       getProps: async (names) => {
@@ -56,6 +58,9 @@ function fakeManager(props = {}, cachedProps = {}) {
       return ['ok'];
     },
     connect: async () => ({}),
+    async ensureClient(bulbId) {
+      return this.getClient(bulbId);
+    },
   };
 }
 
@@ -299,4 +304,79 @@ test('one unreachable lamp does not stop the others from publishing', async () =
 
   await refreshAllDevices(gladys, manager);
   assert.deepEqual(gladys.published.states, []);
+});
+
+test('a colour set right after a restart still powers the lamp on first', async () => {
+  // No session is open yet after a restart or a dropped connection. The power
+  // check used to give up when there was no client, so the colour went to a
+  // lamp that was off — which refuses it — and the click did nothing.
+  const device = buildDevice(fakeGladys(), BULB);
+  const gladys = fakeGladys({ devices: [device] });
+  const manager = fakeManager({ power: 'off' });
+  const client = manager.getClient();
+  let connected = false;
+  manager.getClient = () => (connected ? client : undefined);
+  manager.ensureClient = async () => {
+    connected = true;
+    return client;
+  };
+  const color = device.features.find((feature) => feature.external_id.endsWith(FEATURE_KEYS.COLOR));
+
+  await setDeviceValue(gladys, manager, device, color, 16711680, normalizeConfig());
+
+  assert.deepEqual(
+    manager.commands.map((command) => command.method),
+    ['set_power', 'set_rgb'],
+  );
+});
+
+test('a command hands the address stored on the device to the manager', async () => {
+  // A lamp the startup scan missed is still reachable where it was last seen.
+  const device = buildDevice(fakeGladys(), BULB);
+  const gladys = fakeGladys({ devices: [device] });
+  const manager = fakeManager({ power: 'on' });
+  const feature = device.features.find((f) => f.external_id.endsWith(FEATURE_KEYS.BRIGHTNESS));
+
+  await setDeviceValue(gladys, manager, device, feature, 40, normalizeConfig());
+
+  assert.deepEqual(manager.addresses, [
+    { id: BULB.id, host: BULB.host, port: BULB.port, ifUnknown: true },
+  ]);
+});
+
+test('a lamp declared by hand AND found by the scan is listed once', async () => {
+  // The probe cannot read the factory id, so it names a lamp after its address.
+  // Probing a lamp the scan already found gave the Discover screen the same
+  // lamp twice, under two different ids.
+  let probes = 0;
+  const server = net.createServer((socket) => {
+    probes += 1;
+    socket.on('error', () => {});
+    socket.setEncoding('utf8');
+    socket.on('data', (data) => {
+      const { id } = JSON.parse(data.split('\r\n')[0]);
+      socket.write(JSON.stringify({ id, result: ['on', '50'] }) + '\r\n');
+    });
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const { port } = server.address();
+
+  const gladys = fakeGladys({
+    scanResults: [
+      {
+        source_ip: '127.0.0.1',
+        payload_base64: discoveryPayload({ Location: `yeelight://127.0.0.1:${port}` }),
+      },
+    ],
+  });
+  const config = normalizeConfig({ bulbs: `127.0.0.1:${port}` });
+
+  const bulbs = await discoverAllBulbs(gladys, config);
+  await new Promise((resolve) => server.close(resolve));
+
+  assert.deepEqual(
+    bulbs.map((bulb) => bulb.id),
+    ['0x000000000015243f'],
+  );
+  assert.equal(probes, 0);
 });

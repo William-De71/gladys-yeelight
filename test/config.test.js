@@ -1,6 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeConfig, parseBulbs, DEFAULT_CONFIG } from '../src/config.js';
+import {
+  normalizeConfig,
+  parseBulbs,
+  parseAddress,
+  formatAddress,
+  DEFAULT_CONFIG,
+  CONFIG_BOUNDS,
+} from '../src/config.js';
 
 test('an empty config yields the documented defaults', () => {
   const config = normalizeConfig();
@@ -59,4 +66,37 @@ test('several lights fit in the single-line field the manifest renders', () => {
 test('a colon still introduces the port, never a new address', () => {
   // Splitting on ':' would have torn "192.168.0.200:55443" into two bogus hosts.
   assert.deepEqual(parseBulbs('192.168.0.200:55443'), [{ host: '192.168.0.200', port: 55443 }]);
+});
+
+test('a numeric field emptied in the form falls back to its default', () => {
+  // `Number('')` is 0: a scan listening for 0 seconds finds no lamp at all.
+  const config = normalizeConfig({ scan_duration: '', transition_duration: '  ' });
+  assert.equal(config.scan_duration, DEFAULT_CONFIG.scan_duration);
+  assert.equal(config.transition_duration, DEFAULT_CONFIG.transition_duration);
+  assert.equal(normalizeConfig({ scan_duration: 'abc' }).scan_duration, 5);
+});
+
+test('a numeric field out of the manifest range is brought back into it', () => {
+  const config = normalizeConfig({ scan_duration: 1, transition_duration: 60000 });
+  assert.equal(config.scan_duration, CONFIG_BOUNDS.scan_duration.min);
+  assert.equal(config.transition_duration, CONFIG_BOUNDS.transition_duration.max);
+});
+
+test('an IPv6 address is written in brackets and reaches the socket without them', () => {
+  assert.deepEqual(parseBulbs('[fe80::1]:55444, [fe80::2]'), [
+    { host: 'fe80::1', port: 55444 },
+    { host: 'fe80::2', port: 55443 },
+  ]);
+  // Bare, its last group could not be told from a port.
+  assert.deepEqual(parseBulbs('fe80::1'), []);
+});
+
+test('an address written back on a device reads back identically', () => {
+  for (const [host, port] of [
+    ['192.168.1.42', 55443],
+    ['fe80::1', 55444],
+    ['lamp.local', 1234],
+  ]) {
+    assert.deepEqual(parseAddress(formatAddress(host, port)), { host, port });
+  }
 });

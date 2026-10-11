@@ -19,6 +19,38 @@ export const DEFAULT_CONFIG = {
   transition_duration: 500, // ms of the smooth fade applied to every change
 };
 
+// Bounds of the numeric fields, the same `min`/`max` as the manifest (a test
+// pins this). The form enforces them, but a value set through the API or left
+// over from an older manifest does not go through the form.
+export const CONFIG_BOUNDS = {
+  scan_duration: { min: 3, max: 30 },
+  transition_duration: { min: 0, max: 5000 },
+};
+
+/**
+ * Read one numeric field: the default when it is blank or not a number, the
+ * nearest bound when it is out of range.
+ *
+ * A blank field is the trap this exists for. The form posts an emptied number
+ * input as `''`, and `Number('')` is 0 — a scan listening for 0 seconds finds
+ * no lamp at all, and nothing tells the user why.
+ * @param {unknown} raw - The raw field value.
+ * @param {string} key - The field key, in DEFAULT_CONFIG and CONFIG_BOUNDS.
+ * @returns {number} A usable value.
+ */
+function readNumber(raw, key) {
+  const fallback = DEFAULT_CONFIG[key];
+  if (raw === undefined || raw === null || String(raw).trim() === '') {
+    return fallback;
+  }
+  const number = Number(raw);
+  if (!Number.isFinite(number)) {
+    return fallback;
+  }
+  const { min, max } = CONFIG_BOUNDS[key];
+  return Math.min(max, Math.max(min, number));
+}
+
 /**
  * Split a free-text field into trimmed, non-empty entries.
  *
@@ -45,6 +77,49 @@ function splitEntries(raw) {
 }
 
 /**
+ * Parse one `host[:port]` address.
+ *
+ * An IPv6 literal must be written in brackets (`[fe80::1]:55443`), as in a URL:
+ * it is full of colons, so a bare one cannot tell its last group from a port.
+ * The brackets are stripped from the result, since the socket wants the bare
+ * address.
+ * @param {string} entry - The address.
+ * @returns {{ host: string, port: number }|null} The parsed address, or null.
+ * @example
+ * parseAddress('[fe80::1]:55443'); // { host: 'fe80::1', port: 55443 }
+ */
+export function parseAddress(entry) {
+  const text = String(entry || '').trim();
+  const bracketed = /^\[([^\]]+)\](?::(\d{1,5}))?$/.exec(text);
+  const match = bracketed || /^([^:]+)(?::(\d{1,5}))?$/.exec(text);
+  if (!match) {
+    return null;
+  }
+  const host = match[1].trim();
+  if (!host) {
+    return null;
+  }
+  const port = match[2] ? Number(match[2]) : DEFAULT_CONTROL_PORT;
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    return null;
+  }
+  return { host, port };
+}
+
+/**
+ * Write an address back in the `host:port` form `parseAddress` reads, with the
+ * brackets an IPv6 literal needs.
+ * @param {string} host - The host.
+ * @param {number} [port] - The control port.
+ * @returns {string} The address.
+ * @example
+ * formatAddress('fe80::1', 55443); // '[fe80::1]:55443'
+ */
+export function formatAddress(host, port = DEFAULT_CONTROL_PORT) {
+  return String(host).includes(':') ? `[${host}]:${port}` : `${host}:${port}`;
+}
+
+/**
  * Parse the "bulbs added by hand" field: addresses separated by a comma, a
  * semicolon or a newline, each with an optional `:port`. Used for the bulbs the
  * discovery cannot reach — another VLAN, or a router that drops multicast.
@@ -55,28 +130,12 @@ function splitEntries(raw) {
  */
 export function parseBulbs(raw) {
   return splitEntries(raw)
-    .map((line) => {
-      // An IPv6 literal is written [::1]:55443, so only split on a trailing
-      // `:port` and only when what follows is a number.
-      const match = /^(.*?)(?::(\d{1,5}))?$/.exec(line);
-      if (!match) {
-        return null;
-      }
-      const host = match[1].trim();
-      if (!host) {
-        return null;
-      }
-      const port = match[2] ? Number(match[2]) : DEFAULT_CONTROL_PORT;
-      if (!Number.isInteger(port) || port < 1 || port > 65535) {
-        return null;
-      }
-      return { host, port };
-    })
+    .map(parseAddress)
     .filter((bulb) => bulb !== null);
 }
 
 /**
- * Merge the user config with the defaults, force the numeric types and parse
+ * Merge the user config with the defaults, bound the numeric fields and parse
  * the free-text field.
  * @param {Record<string, unknown>} [raw] - Config returned by the SDK.
  * @returns {object} The normalized configuration.
@@ -86,8 +145,8 @@ export function parseBulbs(raw) {
 export function normalizeConfig(raw = {}) {
   return {
     ...DEFAULT_CONFIG,
-    scan_duration: Number(raw.scan_duration ?? DEFAULT_CONFIG.scan_duration),
-    transition_duration: Number(raw.transition_duration ?? DEFAULT_CONFIG.transition_duration),
+    scan_duration: readNumber(raw.scan_duration, 'scan_duration'),
+    transition_duration: readNumber(raw.transition_duration, 'transition_duration'),
     bulbs: parseBulbs(raw.bulbs),
   };
 }

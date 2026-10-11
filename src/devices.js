@@ -15,6 +15,7 @@ import { describeBulb, featureName, deviceName } from './yeelight/mapping.js';
 import { buildCommand, readState, propsForFeatures } from './yeelight/convert.js';
 import { discoverBulbs } from './yeelight/discovery.js';
 import { YeelightClient } from './yeelight/YeelightClient.js';
+import { formatAddress, parseAddress } from './config.js';
 import {
   EXTERNAL_ID_TYPE,
   DEFAULT_CONTROL_PORT,
@@ -65,10 +66,18 @@ export async function discoverAllBulbs(gladys, config) {
 
   // Manual bulbs: ask each one who it is, since the scan never told us.
   for (const manual of config.bulbs) {
+    // A bulb the scan already found must not be probed as well. The probe
+    // cannot read the factory id, so it names the bulb after its address
+    // (`manual-…`): the same lamp would come out twice, under two ids, and the
+    // Discover screen would offer it twice. The scan result is the better of
+    // the two anyway — it carries the real id and the support list.
+    const scanned = found.find((bulb) => bulb.host === manual.host);
+    if (scanned) {
+      logger.debug(`Yeelight bulb declared at ${manual.host} was found by the scan too`);
+      continue;
+    }
     try {
       const bulb = await probeBulb(manual.host, manual.port);
-      // A bulb found BOTH ways must not appear twice; the probe wins because
-      // its address is the one the user insisted on.
       bulbs.set(bulb.id, bulb);
     } catch (e) {
       logger.warn(`Yeelight bulb declared at ${manual.host} is unreachable: ${e.message}`);
@@ -224,7 +233,7 @@ export function buildDevice(gladys, bulb) {
     params: [
       // The address is a param, not part of the id: a DHCP lease changes, the
       // bulb id does not.
-      { name: PARAM_ADDRESS, value: `${bulb.host}:${bulb.port || DEFAULT_CONTROL_PORT}` },
+      { name: PARAM_ADDRESS, value: formatAddress(bulb.host, bulb.port || DEFAULT_CONTROL_PORT) },
       { name: PARAM_MODEL, value: String(bulb.model || '') },
       { name: PARAM_FIRMWARE, value: String(bulb.firmwareVersion || '') },
       { name: PARAM_SUPPORT, value: String(bulb.support || '') },
@@ -320,17 +329,12 @@ export async function refreshDevice(gladys, manager, device) {
     return;
   }
 
-  let client = manager.getClient(bulbId);
-  if (!client) {
-    // Restore the address from the device params: after a restart the manager
-    // knows nothing, and a poll must not depend on a fresh scan.
-    const address = (device.params || []).find((param) => param.name === PARAM_ADDRESS);
-    if (!address) {
-      return;
-    }
-    const [host, port] = String(address.value).split(':');
-    client = await manager.connect({ id: bulbId, host, port: Number(port) });
+  // Restore the address from the device params: after a restart the manager
+  // knows nothing, and a poll must not depend on a fresh scan.
+  if (!rememberDeviceAddress(manager, bulbId, device) && !manager.getClient(bulbId)) {
+    return;
   }
+  const client = await manager.ensureClient(bulbId);
 
   const props = await client.getProps(names);
   await publishBulbState(gladys, bulbId, props);
@@ -350,6 +354,9 @@ export async function refreshDevice(gladys, manager, device) {
  */
 export async function setDeviceValue(gladys, manager, device, feature, value, config) {
   const bulbId = parseDeviceExternalId(gladys, device.external_id);
+  // A lamp the startup scan missed (powered off at the time, another subnet)
+  // is still reachable at the address its device carries.
+  rememberDeviceAddress(manager, bulbId, device);
   const key = featureKeyOf(gladys, feature.external_id, bulbId);
   if (!key) {
     throw new Error(`Yeelight feature external_id is invalid: "${feature.external_id}"`);
@@ -387,7 +394,7 @@ export async function setDeviceValue(gladys, manager, device, feature, value, co
   // property itself once the fade ends — reading it back spent a third command
   // per step to learn what the push was already carrying.
   if (movesOtherFeatures(key)) {
-    await readBackState(gladys, manager, bulbId, key, config.transition_duration).catch((e) =>
+    await readBackState(gladys, manager, bulbId, config.transition_duration).catch((e) =>
       logger.debug(`Could not read back the state of "${bulbId}": ${e.message}`),
     );
   }
@@ -402,10 +409,10 @@ export async function setDeviceValue(gladys, manager, device, feature, value, co
  * @param {object} gladys - The Gladys SDK instance.
  * @param {object} manager - The YeelightManager instance.
  * @param {string} bulbId - The bulb id.
- * @param {string} key - The feature key that was commanded.
+ * @param {number} [transitionMs] - The fade duration of the command.
  * @returns {Promise<void>} Resolves once the fresh state is published.
  */
-async function readBackState(gladys, manager, bulbId, key, transitionMs = 0) {
+async function readBackState(gladys, manager, bulbId, transitionMs = 0) {
   const client = manager.getClient(bulbId);
   if (!client) {
     return;
@@ -424,16 +431,12 @@ async function readBackState(gladys, manager, bulbId, key, transitionMs = 0) {
     return;
   }
 
+  // A power command can move any other feature, so everything is re-read.
   const keys = (device.features || [])
     .map((feature) => featureKeyOf(gladys, feature.external_id, bulbId))
     .filter(Boolean);
-  // A power command can move any other feature, so everything is re-read; a
-  // colour or brightness command only ever moves its own light.
-  const scope = movesOtherFeatures(key)
-    ? keys
-    : keys.filter((candidate) => candidate.startsWith('bg_') === key.startsWith('bg_'));
 
-  const names = propsForFeatures(scope.map((candidate) => ({ key: candidate })));
+  const names = propsForFeatures(keys.map((candidate) => ({ key: candidate })));
   if (names.length === 0) {
     return;
   }
@@ -475,10 +478,10 @@ async function ensurePoweredOn(manager, bulbId, key, config) {
   const method = isBackground ? 'bg_set_power' : 'set_power';
 
   try {
-    const client = manager.getClient(bulbId);
-    if (!client) {
-      return false;
-    }
+    // Connect when needed rather than giving up: after a restart or a dropped
+    // session there is no client yet, and skipping the check sent the colour
+    // to a lamp that was off — which refuses it.
+    const client = await manager.ensureClient(bulbId);
     // Ask the bulb only when nothing has told us the state yet. The client
     // caches what the pushes, the read-backs and our own power commands report,
     // and dragging a slider used to spend one `get_prop` per step on a value
@@ -495,6 +498,24 @@ async function ensurePoweredOn(manager, bulbId, key, config) {
     logger.debug(`Could not check the power state of "${bulbId}": ${e.message}`);
   }
   return false;
+}
+
+/**
+ * Hand the address stored on a Gladys device to the manager, unless it already
+ * knows a fresher one from a scan.
+ * @param {object} manager - The YeelightManager instance.
+ * @param {string} bulbId - The bulb id.
+ * @param {object} device - The Gladys device.
+ * @returns {boolean} True when the device carries a usable address.
+ */
+function rememberDeviceAddress(manager, bulbId, device) {
+  const param = (device.params || []).find((entry) => entry.name === PARAM_ADDRESS);
+  const address = param ? parseAddress(param.value) : null;
+  if (!address) {
+    return false;
+  }
+  manager.rememberAddress({ id: bulbId, ...address }, { ifUnknown: true });
+  return true;
 }
 
 /**

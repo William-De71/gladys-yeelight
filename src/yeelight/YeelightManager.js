@@ -39,6 +39,13 @@ export class YeelightManager {
     this.reconnectTimers = new Map();
     /** @type {Map<string, number>} */
     this.reconnectDelays = new Map();
+    // Connections being opened, shared by concurrent callers. After a restart a
+    // poll, a command and the startup refresh can all reach the same bulb at
+    // once; without this each opened its own socket, the last one replaced the
+    // others in `clients`, and the orphans kept holding one of the bulb's 4
+    // connection slots until the lamp itself dropped them.
+    /** @type {Map<string, Promise<YeelightClient>>} */
+    this.connecting = new Map();
     /** @type {Function|null} */
     this.propsCallback = null;
     /** @type {Function|null} */
@@ -77,12 +84,30 @@ export class YeelightManager {
    * @example
    * const client = await manager.connect({ id: '0x1', host: '192.168.1.239' });
    */
-  async connect(bulb) {
+  connect(bulb) {
     const existing = this.clients.get(bulb.id);
     if (existing && existing.connected) {
-      return existing;
+      return Promise.resolve(existing);
+    }
+    const pending = this.connecting.get(bulb.id);
+    if (pending) {
+      return pending;
     }
 
+    const attempt = this.openConnection(bulb).finally(() => {
+      this.connecting.delete(bulb.id);
+    });
+    this.connecting.set(bulb.id, attempt);
+    return attempt;
+  }
+
+  /**
+   * Open a new connection to a bulb. Only `connect` calls this, so that two
+   * callers never race to open two sockets to the same lamp.
+   * @param {object} bulb - `{ id, host, port }`.
+   * @returns {Promise<YeelightClient>} The connected client.
+   */
+  async openConnection(bulb) {
     const port = bulb.port || DEFAULT_CONTROL_PORT;
     this.addresses.set(bulb.id, { host: bulb.host, port });
 
@@ -104,6 +129,14 @@ export class YeelightManager {
     });
 
     await client.connect();
+
+    // A shutdown that started while the socket was opening must not be undone
+    // by it: the client would hold a slot on the bulb and keep the process up.
+    if (this.stopped) {
+      client.removeAllListeners('disconnect');
+      client.disconnect();
+      throw new Error(`Yeelight manager stopped while connecting to "${bulb.id}"`);
+    }
 
     this.clients.set(bulb.id, client);
     // A successful connection resets the backoff, so the next outage starts
@@ -187,24 +220,50 @@ export class YeelightManager {
    * await manager.command('0x1', 'set_power', ['on', 'smooth', 500]);
    */
   async command(bulbId, method, params) {
-    let client = this.getClient(bulbId);
-    if (!client) {
-      const address = this.addresses.get(bulbId);
-      if (!address) {
-        throw new Error(`Yeelight bulb "${bulbId}" has no known address`);
-      }
-      client = await this.connect({ id: bulbId, ...address });
-    }
+    const client = await this.ensureClient(bulbId);
     return client.command(method, params);
+  }
+
+  /**
+   * Get the open client of a bulb, connecting to its last known address when
+   * the session is down.
+   *
+   * What matters is that EVERY caller goes through here, not only `command`:
+   * the power check that precedes a colour command used to give up on a bulb
+   * that was not connected yet, so the colour then reached a lamp that was off
+   * and was refused.
+   * @param {string} bulbId - The bulb id.
+   * @returns {Promise<YeelightClient>} The connected client.
+   * @example
+   * const client = await manager.ensureClient('0x1');
+   */
+  async ensureClient(bulbId) {
+    const client = this.getClient(bulbId);
+    if (client) {
+      return client;
+    }
+    const address = this.addresses.get(bulbId);
+    if (!address) {
+      throw new Error(`Yeelight bulb "${bulbId}" has no known address`);
+    }
+    return this.connect({ id: bulbId, ...address });
   }
 
   /**
    * Remember the address of a bulb without connecting to it, so a later command
    * or reconnection knows where to reach it.
+   *
+   * `ifUnknown` is for the address stored on a Gladys device: it is only a
+   * fallback, and must never override a fresher one learnt from a scan.
    * @param {object} bulb - `{ id, host, port }`.
+   * @param {object} [options] - Options.
+   * @param {boolean} [options.ifUnknown] - Keep the address already known, if any.
    * @returns {void}
    */
-  rememberAddress(bulb) {
+  rememberAddress(bulb, { ifUnknown = false } = {}) {
+    if (ifUnknown && this.addresses.has(bulb.id)) {
+      return;
+    }
     this.addresses.set(bulb.id, {
       host: bulb.host,
       port: bulb.port || DEFAULT_CONTROL_PORT,
