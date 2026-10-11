@@ -1,3 +1,21 @@
+## [1.3.0](https://github.com/William-De71/gladys-yeelight/compare/v1.2.1...v1.3.0) (2026-10-11)
+
+### Features
+
+* **yeelight:** translate the integration into German and Spanish ([1d6114c](https://github.com/William-De71/gladys-yeelight/commit/1d6114c570d2cd24ee04e477ea3b0741c96078e2))
+
+### Bug Fixes
+
+* **yeelight:** harden discovery, power-on and connection handling ([8d29dc5](https://github.com/William-De71/gladys-yeelight/commit/8d29dc562d44f914946974f87fc2cd395fa5a925))
+
+### Documentation
+
+* add the Apache-2.0 license, diagrams and a reworked README ([d62b331](https://github.com/William-De71/gladys-yeelight/commit/d62b331943a90d4cad860ac5cd9e3d9c4fc5f654))
+
+### Continuous Integration
+
+* push the release commit and its tag atomically, ship the manifest label ([8eb788e](https://github.com/William-De71/gladys-yeelight/commit/8eb788e999c2fbf827377c90f488a8fdf6f04f84))
+
 ## [1.2.1](https://github.com/William-De71/gladys-yeelight/compare/v1.2.0...v1.2.1) (2026-08-24)
 
 ### Bug Fixes
