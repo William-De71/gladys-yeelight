@@ -98,6 +98,12 @@ jobs:
           fi
           echo "image_ref=${image}:${version}" >> "$GITHUB_OUTPUT"
           echo "tags=$tags" >> "$GITHUB_OUTPUT"
+          # The manifest shipped as an image label, with `docker_image` pointing
+          # at the tag being pushed. Compacted onto a single line: a Docker
+          # label value cannot span several lines.
+          manifest=$(jq -c --arg image "${image}:${version}" \
+            '.docker_image = $image' gladys-assistant-integration.json)
+          echo "manifest=$manifest" >> "$GITHUB_OUTPUT"
 
       - name: Build and push (amd64 + arm64)
         uses: docker/build-push-action@v6
@@ -106,6 +112,14 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
+          # Ship the manifest inside the image, with `docker_image` rewritten to
+          # the tag actually pushed. On a dev install (by image, no store slug)
+          # Gladys re-reads THIS label when updating: without it, a change to
+          # the config schema, the actions or `network_discovery` would never
+          # reach the installed integration — it would keep the manifest
+          # captured at install time.
+          labels: |
+            io.gladysassistant.manifest=${{ steps.meta.outputs.manifest }}
 
       - name: Docker build summary
         env:
