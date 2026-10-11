@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 420" width="880" height="420" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <title>What happens when you pick a colour on a light that is off</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#57606a"/>
+    </marker>
+    <marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8250df"/>
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1a7f37"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="880" height="420" rx="14" fill="#ffffff" stroke="#d0d7de"/>
+
+  <!-- Lifelines -->
+  <rect x="40" y="24" width="180" height="44" rx="8" fill="#eef6ff" stroke="#0969da" stroke-width="1.5"/>
+  <text x="130" y="51" text-anchor="middle" font-size="14" font-weight="600" fill="#0a3069">Gladys</text>
+  <rect x="350" y="24" width="180" height="44" rx="8" fill="#fff8e6" stroke="#bf8700" stroke-width="1.5"/>
+  <text x="440" y="51" text-anchor="middle" font-size="14" font-weight="600" fill="#6b4600">Integration</text>
+  <rect x="660" y="24" width="180" height="44" rx="8" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/>
+  <text x="750" y="51" text-anchor="middle" font-size="14" font-weight="600" fill="#24292f">Light (off)</text>
+  <line x1="130" y1="68" x2="130" y2="400" stroke="#d0d7de" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="440" y1="68" x2="440" y2="400" stroke="#d0d7de" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="750" y1="68" x2="750" y2="400" stroke="#d0d7de" stroke-width="1.5" stroke-dasharray="4 4"/>
+
+  <!-- 1. user picks a colour -->
+  <line x1="130" y1="100" x2="436" y2="100" stroke="#8250df" stroke-width="2" marker-end="url(#arrow-purple)"/>
+  <text x="285" y="92" text-anchor="middle" font-size="12" fill="#24292f">colour = red</text>
+
+  <!-- 2. power check -->
+  <rect x="300" y="116" width="280" height="44" rx="6" fill="#f6f8fa" stroke="#d0d7de"/>
+  <text x="440" y="134" text-anchor="middle" font-size="12" fill="#24292f">power known? (pushes, earlier commands)</text>
+  <text x="440" y="151" text-anchor="middle" font-size="12" fill="#24292f">otherwise ask once: get_prop power</text>
+
+  <!-- 3. power on -->
+  <line x1="440" y1="190" x2="746" y2="190" stroke="#8250df" stroke-width="2" marker-end="url(#arrow-purple)"/>
+  <text x="595" y="182" text-anchor="middle" font-size="12" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#24292f">set_power on</text>
+  <text x="595" y="207" text-anchor="middle" font-size="11" fill="#57606a">a light that is off refuses colour, temperature and brightness</text>
+
+  <!-- 4. colour -->
+  <line x1="440" y1="240" x2="746" y2="240" stroke="#8250df" stroke-width="2" marker-end="url(#arrow-purple)"/>
+  <text x="595" y="232" text-anchor="middle" font-size="12" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#24292f">set_rgb 16711680 smooth 500</text>
+
+  <!-- 5. ack to Gladys -->
+  <line x1="436" y1="270" x2="134" y2="270" stroke="#57606a" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="285" y="262" text-anchor="middle" font-size="12" fill="#24292f">done (well within 5 s)</text>
+
+  <!-- 6. push -->
+  <line x1="750" y1="316" x2="444" y2="316" stroke="#1a7f37" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <text x="595" y="308" text-anchor="middle" font-size="12" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#24292f">props {power: on, rgb: 16711680}</text>
+  <line x1="440" y1="346" x2="134" y2="346" stroke="#1a7f37" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <text x="285" y="338" text-anchor="middle" font-size="12" fill="#24292f">states published</text>
+
+  <!-- Quota note -->
+  <rect x="160" y="364" width="560" height="40" rx="6" fill="#fff8e6" stroke="#bf8700"/>
+  <text x="440" y="389" text-anchor="middle" font-size="12" fill="#24292f">A light silently ignores a connection past 60 commands a minute: bursts go out at once, a flood waits.</text>
+</svg>

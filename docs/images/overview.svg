@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 500" width="880" height="500" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <title>How the Yeelight integration talks to your lights</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#57606a"/>
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1a7f37"/>
+    </marker>
+    <marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8250df"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="880" height="500" rx="14" fill="#ffffff" stroke="#d0d7de"/>
+
+  <!-- Gladys -->
+  <rect x="40" y="40" width="230" height="120" rx="10" fill="#eef6ff" stroke="#0969da" stroke-width="1.5"/>
+  <text x="155" y="78" text-anchor="middle" font-size="16" font-weight="600" fill="#0a3069">Gladys</text>
+  <text x="155" y="102" text-anchor="middle" font-size="12" fill="#24292f">dashboard, scenes, history</text>
+  <text x="155" y="122" text-anchor="middle" font-size="12" fill="#24292f">+ sends the discovery broadcast</text>
+  <text x="155" y="142" text-anchor="middle" font-size="12" fill="#24292f">from the host network (UDP 1982)</text>
+
+  <!-- Integration -->
+  <rect x="390" y="40" width="250" height="120" rx="10" fill="#fff8e6" stroke="#bf8700" stroke-width="1.5"/>
+  <text x="515" y="78" text-anchor="middle" font-size="16" font-weight="600" fill="#6b4600">Yeelight integration</text>
+  <text x="515" y="102" text-anchor="middle" font-size="12" fill="#24292f">its own container,</text>
+  <text x="515" y="122" text-anchor="middle" font-size="12" fill="#24292f">ONE open connection per light,</text>
+  <text x="515" y="142" text-anchor="middle" font-size="12" fill="#24292f">≤ 55 commands / minute each</text>
+
+  <!-- Gladys <-> integration -->
+  <line x1="270" y1="100" x2="388" y2="100" stroke="#57606a" stroke-width="1.5" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text x="329" y="88" text-anchor="middle" font-size="11" fill="#57606a">WebSocket</text>
+  <text x="329" y="118" text-anchor="middle" font-size="11" fill="#57606a">+ host API</text>
+
+  <!-- Legend -->
+  <line x1="680" y1="66" x2="720" y2="66" stroke="#1a7f37" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <text x="728" y="70" font-size="12" fill="#24292f">states pushed</text>
+  <line x1="680" y1="96" x2="720" y2="96" stroke="#8250df" stroke-width="2" marker-end="url(#arrow-purple)"/>
+  <text x="728" y="100" font-size="12" fill="#24292f">commands</text>
+  <line x1="680" y1="126" x2="720" y2="126" stroke="#57606a" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  <text x="728" y="130" font-size="12" fill="#24292f">discovery reply</text>
+
+  <!-- LAN band -->
+  <rect x="20" y="215" width="840" height="270" rx="12" fill="#f6f8fa" stroke="#d0d7de" stroke-dasharray="6 5"/>
+  <text x="40" y="470" font-size="12" font-weight="600" fill="#57606a">YOUR LOCAL NETWORK — "LAN Control" enabled on each light, JSON lines over TCP 55443</text>
+
+  <!-- Light 1 -->
+  <rect x="60" y="270" width="220" height="170" rx="10" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/>
+  <circle cx="90" cy="298" r="9" fill="#ffb347"/>
+  <text x="180" y="302" text-anchor="middle" font-size="15" font-weight="600" fill="#24292f">Living room</text>
+  <text x="170" y="322" text-anchor="middle" font-size="12" fill="#57606a">colour bulb (color4)</text>
+  <text x="80" y="352" font-size="12" fill="#24292f">• on / off</text>
+  <text x="80" y="372" font-size="12" fill="#24292f">• brightness 1-100 %</text>
+  <text x="80" y="392" font-size="12" fill="#24292f">• colour (RGB)</text>
+  <text x="80" y="412" font-size="12" fill="#24292f">• colour temperature</text>
+
+
+
+
+
+  <!-- Light 2 -->
+  <rect x="330" y="270" width="220" height="170" rx="10" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/>
+  <circle cx="360" cy="298" r="9" fill="#fff4d6" stroke="#bf8700"/>
+  <text x="450" y="302" text-anchor="middle" font-size="15" font-weight="600" fill="#24292f">Bedroom</text>
+  <text x="440" y="322" text-anchor="middle" font-size="12" fill="#57606a">ceiling light (ceiling10)</text>
+  <text x="350" y="352" font-size="12" fill="#24292f">• main light: white</text>
+  <text x="350" y="372" font-size="12" fill="#24292f">• ambient ring: colour</text>
+  <text x="350" y="392" font-size="12" fill="#24292f">• night light (moonlight)</text>
+
+
+
+
+  <!-- Light 3 -->
+  <rect x="600" y="270" width="220" height="170" rx="10" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/>
+  <circle cx="630" cy="298" r="9" fill="#8250df"/>
+  <text x="720" y="302" text-anchor="middle" font-size="15" font-weight="600" fill="#24292f">TV strip</text>
+  <text x="710" y="322" text-anchor="middle" font-size="12" fill="#57606a">LED Lightstrip 1S (strip6)</text>
+  <text x="620" y="352" font-size="12" fill="#24292f">• on / off</text>
+  <text x="620" y="372" font-size="12" fill="#24292f">• brightness</text>
+  <text x="620" y="392" font-size="12" fill="#24292f">• colour (no white LED,</text>
+  <text x="632" y="410" font-size="12" fill="#24292f">so no temperature)</text>
+
+
+
+
+
+  <!-- State arrows (lights -> integration) -->
+  <path d="M 190 268 C 190 210, 470 210, 480 163" fill="none" stroke="#1a7f37" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <path d="M 440 268 L 500 163" fill="none" stroke="#1a7f37" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <path d="M 690 268 C 690 210, 560 220, 545 163" fill="none" stroke="#1a7f37" stroke-width="2" marker-end="url(#arrow-green)"/>
+
+  <!-- Command arrows (integration -> lights) -->
+  <path d="M 530 163 L 470 268" fill="none" stroke="#8250df" stroke-width="2" marker-end="url(#arrow-purple)"/>
+  <path d="M 575 163 C 590 210, 720 210, 730 268" fill="none" stroke="#8250df" stroke-width="2" marker-end="url(#arrow-purple)"/>
+
+  <!-- Discovery reply (lights -> Gladys) -->
+  <path d="M 110 268 L 110 163" fill="none" stroke="#57606a" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+</svg>
