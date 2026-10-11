@@ -109,4 +109,55 @@ test('the LAN Control prerequisite is stated in the configuration screen', () =>
   const intro = manifest.config_schema.find((field) => field.key === 'intro');
   assert.match(intro.description.en, /LAN Control/);
   assert.match(intro.description.fr, /Contrôle LAN/);
+  assert.match(intro.description.de, /LAN-Steuerung/);
+  assert.match(intro.description.es, /Control LAN/);
+});
+
+test('the config bounds agree with the ones the code clamps to', async () => {
+  const { CONFIG_BOUNDS } = await import('../src/config.js');
+  for (const [key, { min, max }] of Object.entries(CONFIG_BOUNDS)) {
+    const field = manifest.config_schema.find((entry) => entry.key === key);
+    assert.equal(field.min, min, `${key}: min drift between manifest and code`);
+    assert.equal(field.max, max, `${key}: max drift between manifest and code`);
+  }
+});
+
+test('every text of the manifest exists in the four languages of Gladys', () => {
+  // A field translated in English only shows up in English in a German
+  // interface; this keeps a new field from shipping half-translated.
+  const missing = [];
+  const walk = (node, path) => {
+    if (Array.isArray(node)) {
+      node.forEach((entry, index) => walk(entry, `${path}[${index}]`));
+      return;
+    }
+    if (!node || typeof node !== 'object') {
+      return;
+    }
+    if (typeof node.en === 'string') {
+      for (const language of ['en', 'fr', 'de', 'es']) {
+        if (typeof node[language] !== 'string' || node[language].trim() === '') {
+          missing.push(`${path}.${language}`);
+        }
+      }
+      return;
+    }
+    Object.entries(node).forEach(([key, value]) => walk(value, `${path}.${key}`));
+  };
+  walk(manifest, '$');
+  assert.deepEqual(missing, []);
+});
+
+test('the user documentation exists in the four languages of Gladys', () => {
+  for (const language of ['en', 'fr', 'de', 'es']) {
+    const doc = readFileSync(new URL(`../docs/${language}.md`, import.meta.url), 'utf-8');
+    assert.ok(doc.length > 1000, `docs/${language}.md looks empty`);
+  }
+});
+
+test('the repository ships the license package.json declares', () => {
+  const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url)));
+  assert.equal(pkg.license, 'Apache-2.0');
+  const license = readFileSync(new URL('../LICENSE', import.meta.url), 'utf-8');
+  assert.match(license, /Apache License\s+Version 2\.0/);
 });

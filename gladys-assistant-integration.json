@@ -4,7 +4,9 @@
   "name": "Yeelight",
   "description": {
     "en": "Control your Yeelight Wi-Fi lights locally: on/off, brightness, color.",
-    "fr": "Pilotez vos lampes Yeelight en Wi-Fi localement : on/off, luminosité, couleur."
+    "fr": "Pilotez vos lampes Yeelight en Wi-Fi localement : on/off, luminosité, couleur.",
+    "de": "Steuern Sie Ihre Yeelight-WLAN-Lampen lokal: Ein/Aus, Helligkeit, Farbe.",
+    "es": "Controle sus luces Wi-Fi Yeelight en local: encendido, brillo, color."
   },
   "version": "1.2.1",
   "docker_image": "ghcr.io/william-de71/gladys-yeelight:1.2.1",
@@ -24,18 +26,24 @@
       "type": "section",
       "label": {
         "en": "Getting started",
-        "fr": "Pour commencer"
+        "fr": "Pour commencer",
+        "de": "Erste Schritte",
+        "es": "Primeros pasos"
       },
       "description": {
         "en": "This integration talks to your Yeelight lights on your local network, with no cloud account involved.\n\nOne thing to do first: in the Yeelight app, open each light and enable \"LAN Control\" (Settings → LAN Control). A light without it refuses every local command and will not be found. Then go to the Discover screen and run a scan: your lights appear there, ready to be added. No IP address to type.",
-        "fr": "Cette intégration communique avec vos lampes Yeelight sur votre réseau local, sans passer par un compte cloud.\n\nUne chose à faire avant tout : dans l'application Yeelight, ouvrez chaque lampe et activez « Contrôle LAN » (Réglages → Contrôle LAN). Une lampe sans cette option refuse toute commande locale et ne sera pas trouvée. Allez ensuite dans l'écran Découverte et lancez un scan : vos lampes y apparaissent, prêtes à être ajoutées. Aucune adresse IP à saisir."
+        "fr": "Cette intégration communique avec vos lampes Yeelight sur votre réseau local, sans passer par un compte cloud.\n\nUne chose à faire avant tout : dans l'application Yeelight, ouvrez chaque lampe et activez « Contrôle LAN » (Réglages → Contrôle LAN). Une lampe sans cette option refuse toute commande locale et ne sera pas trouvée. Allez ensuite dans l'écran Découverte et lancez un scan : vos lampes y apparaissent, prêtes à être ajoutées. Aucune adresse IP à saisir.",
+        "de": "Diese Integration spricht mit Ihren Yeelight-Lampen in Ihrem lokalen Netzwerk, ganz ohne Cloud-Konto.\n\nVorher eine Sache: Öffnen Sie in der Yeelight-App jede Lampe und aktivieren Sie „LAN-Steuerung“ (Einstellungen → LAN-Steuerung). Eine Lampe ohne diese Option lehnt jeden lokalen Befehl ab und wird nicht gefunden. Öffnen Sie dann den Bildschirm „Entdecken“ und starten Sie eine Suche: Ihre Lampen erscheinen dort und können hinzugefügt werden. Keine IP-Adresse einzugeben.",
+        "es": "Esta integración se comunica con sus luces Yeelight en su red local, sin ninguna cuenta en la nube.\n\nAntes de nada: en la aplicación Yeelight, abra cada luz y active «Control LAN» (Ajustes → Control LAN). Una luz sin esta opción rechaza cualquier comando local y no se encontrará. Luego vaya a la pantalla Descubrir e inicie una búsqueda: sus luces aparecen allí, listas para añadirse. Sin ninguna dirección IP que escribir."
       },
       "links": [
         {
           "url": "https://www.yeelight.com/",
           "label": {
             "en": "Yeelight website",
-            "fr": "Site Yeelight"
+            "fr": "Site Yeelight",
+            "de": "Yeelight-Website",
+            "es": "Sitio web de Yeelight"
           }
         }
       ]
@@ -45,11 +53,15 @@
       "type": "number",
       "label": {
         "en": "Transition duration (ms)",
-        "fr": "Durée de transition (ms)"
+        "fr": "Durée de transition (ms)",
+        "de": "Übergangsdauer (ms)",
+        "es": "Duración de la transición (ms)"
       },
       "description": {
         "en": "How long a light takes to fade to its new state. Set 0 for an instant change.",
-        "fr": "Temps que met une lampe pour passer à son nouvel état en fondu. Mettez 0 pour un changement instantané."
+        "fr": "Temps que met une lampe pour passer à son nouvel état en fondu. Mettez 0 pour un changement instantané.",
+        "de": "Wie lange eine Lampe braucht, um in ihren neuen Zustand überzublenden. 0 für einen sofortigen Wechsel.",
+        "es": "Tiempo que tarda una luz en pasar a su nuevo estado con un fundido. Ponga 0 para un cambio instantáneo."
       },
       "required": false,
       "default": 500,
@@ -61,11 +73,15 @@
       "type": "section",
       "label": {
         "en": "Lights not found by the scan",
-        "fr": "Lampes non trouvées par le scan"
+        "fr": "Lampes non trouvées par le scan",
+        "de": "Von der Suche nicht gefundene Lampen",
+        "es": "Luces no encontradas por la búsqueda"
       },
       "description": {
         "en": "Fill the field below if a light is not found by the network scan. The most common reason: your lights sit on another subnet or VLAN than Gladys — the discovery broadcast does not cross a router, so the scan cannot reach them, while control itself works fine. Raising the discovery duration does not help in that case.",
-        "fr": "Remplissez le champ ci-dessous si une lampe n'est pas trouvée par le scan réseau. La raison la plus courante : vos lampes sont sur un autre sous-réseau ou VLAN que Gladys — le broadcast de découverte ne franchit pas un routeur, donc le scan ne peut pas les atteindre, alors que le pilotage fonctionne. Augmenter la durée de découverte n'y change rien."
+        "fr": "Remplissez le champ ci-dessous si une lampe n'est pas trouvée par le scan réseau. La raison la plus courante : vos lampes sont sur un autre sous-réseau ou VLAN que Gladys — le broadcast de découverte ne franchit pas un routeur, donc le scan ne peut pas les atteindre, alors que le pilotage fonctionne. Augmenter la durée de découverte n'y change rien.",
+        "de": "Füllen Sie das Feld unten aus, wenn eine Lampe von der Netzwerksuche nicht gefunden wird. Der häufigste Grund: Ihre Lampen liegen in einem anderen Subnetz oder VLAN als Gladys — der Broadcast der Suche überquert keinen Router, die Suche kann sie also nicht erreichen, während die Steuerung selbst funktioniert. Eine längere Suchdauer hilft in diesem Fall nicht.",
+        "es": "Rellene el campo de abajo si la búsqueda en la red no encuentra una luz. La causa más habitual: sus luces están en otra subred o VLAN distinta de la de Gladys — el broadcast de la búsqueda no atraviesa un router, así que no puede alcanzarlas, mientras que el control sí funciona. Aumentar la duración de la búsqueda no cambia nada en ese caso."
       }
     },
     {
@@ -73,15 +89,21 @@
       "type": "string",
       "label": {
         "en": "Lights added by hand",
-        "fr": "Lampes ajoutées à la main"
+        "fr": "Lampes ajoutées à la main",
+        "de": "Manuell hinzugefügte Lampen",
+        "es": "Luces añadidas a mano"
       },
       "description": {
         "en": "One address per light (`192.168.1.42`, or `192.168.1.42:55443`), separated by a comma. Give these lights a fixed address in your router: unlike a light found by the scan, one added by hand is identified by its address, and a new DHCP lease would make Gladys see it as a different light.",
-        "fr": "Une adresse par lampe (`192.168.1.42`, ou `192.168.1.42:55443`), séparées par une virgule. Donnez à ces lampes une adresse fixe dans votre routeur : contrairement à une lampe trouvée par le scan, une lampe ajoutée à la main est identifiée par son adresse, et un nouveau bail DHCP ferait voir à Gladys une lampe différente."
+        "fr": "Une adresse par lampe (`192.168.1.42`, ou `192.168.1.42:55443`), séparées par une virgule. Donnez à ces lampes une adresse fixe dans votre routeur : contrairement à une lampe trouvée par le scan, une lampe ajoutée à la main est identifiée par son adresse, et un nouveau bail DHCP ferait voir à Gladys une lampe différente.",
+        "de": "Eine Adresse pro Lampe (`192.168.1.42` oder `192.168.1.42:55443`), durch Kommas getrennt. Geben Sie diesen Lampen eine feste Adresse in Ihrem Router: Anders als eine von der Suche gefundene Lampe wird eine manuell hinzugefügte über ihre Adresse erkannt, und eine neue DHCP-Zuweisung ließe Gladys sie für eine andere Lampe halten.",
+        "es": "Una dirección por luz (`192.168.1.42` o `192.168.1.42:55443`), separadas por comas. Asigne a estas luces una dirección fija en su router: a diferencia de una luz encontrada por la búsqueda, una añadida a mano se identifica por su dirección, y una nueva concesión DHCP haría que Gladys la viera como una luz diferente."
       },
       "placeholder": {
         "en": "192.168.1.42, 192.168.1.43:55443",
-        "fr": "192.168.1.42, 192.168.1.43:55443"
+        "fr": "192.168.1.42, 192.168.1.43:55443",
+        "de": "192.168.1.42, 192.168.1.43:55443",
+        "es": "192.168.1.42, 192.168.1.43:55443"
       },
       "required": false
     },
@@ -90,11 +112,15 @@
       "type": "number",
       "label": {
         "en": "Discovery duration (s)",
-        "fr": "Durée de la découverte (s)"
+        "fr": "Durée de la découverte (s)",
+        "de": "Suchdauer (s)",
+        "es": "Duración de la búsqueda (s)"
       },
       "description": {
         "en": "How long the scan listens for lights answering on the network. Only useful on a busy network: it cannot help if your lights are on another subnet.",
-        "fr": "Durée pendant laquelle le scan écoute les lampes qui répondent sur le réseau. Utile seulement si votre réseau est chargé : cela ne peut rien si vos lampes sont sur un autre sous-réseau."
+        "fr": "Durée pendant laquelle le scan écoute les lampes qui répondent sur le réseau. Utile seulement si votre réseau est chargé : cela ne peut rien si vos lampes sont sur un autre sous-réseau.",
+        "de": "Wie lange die Suche auf Antworten der Lampen im Netzwerk wartet. Nur in einem stark ausgelasteten Netzwerk nützlich: Sie hilft nicht, wenn Ihre Lampen in einem anderen Subnetz liegen.",
+        "es": "Tiempo durante el que la búsqueda escucha las luces que responden en la red. Solo útil en una red muy cargada: no sirve de nada si sus luces están en otra subred."
       },
       "required": false,
       "default": 5,
@@ -107,7 +133,9 @@
       "key": "test_connection",
       "label": {
         "en": "Test the connection",
-        "fr": "Tester la connexion"
+        "fr": "Tester la connexion",
+        "de": "Verbindung testen",
+        "es": "Probar la conexión"
       },
       "timeout_seconds": 60
     },
@@ -115,7 +143,9 @@
       "key": "reconnect",
       "label": {
         "en": "Reconnect the lights",
-        "fr": "Reconnecter les lampes"
+        "fr": "Reconnecter les lampes",
+        "de": "Lampen neu verbinden",
+        "es": "Reconectar las luces"
       },
       "timeout_seconds": 60
     }

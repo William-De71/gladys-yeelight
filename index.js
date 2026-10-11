@@ -16,6 +16,7 @@
 import { GladysIntegration, logger } from '@gladysassistant/integration-sdk';
 import { YeelightManager } from './src/yeelight/YeelightManager.js';
 import { normalizeConfig } from './src/config.js';
+import { MESSAGES, testOk, testFailed, reconnectOk, reconnectFailed } from './src/messages.js';
 import {
   buildDiscoveredDevices,
   publishBulbState,
@@ -62,12 +63,7 @@ async function publishDevices() {
   if (devices.length > 0) {
     await gladys.setConnectionStatus(true).catch(() => {});
   } else {
-    await gladys
-      .setConnectionStatus(false, {
-        en: 'No Yeelight bulb found. Check that "LAN Control" is enabled in the Yeelight app.',
-        fr: "Aucune ampoule Yeelight trouvée. Vérifiez que « Contrôle LAN » est activé dans l'application Yeelight.",
-      })
-      .catch(() => {});
+    await gladys.setConnectionStatus(false, MESSAGES.noBulbFound).catch(() => {});
   }
   return devices;
 }
@@ -119,22 +115,13 @@ gladys.onAction('test_connection', async () => {
   try {
     const devices = await publishDevices();
     if (devices.length === 0) {
-      return {
-        en: 'No Yeelight bulb answered. Check that they are powered on and that "LAN Control" is enabled in the Yeelight app.',
-        fr: "Aucune ampoule Yeelight n'a répondu. Vérifiez qu'elles sont allumées et que « Contrôle LAN » est activé dans l'application Yeelight.",
-      };
+      return MESSAGES.testNoAnswer;
     }
     const featureCount = devices.reduce((total, device) => total + device.features.length, 0);
-    return {
-      en: `Connection OK: ${devices.length} bulb(s), ${featureCount} feature(s) available.`,
-      fr: `Connexion OK : ${devices.length} ampoule(s), ${featureCount} fonctionnalité(s) disponible(s).`,
-    };
+    return testOk(devices.length, featureCount);
   } catch (e) {
     logger.error('Yeelight connection test failed', e);
-    return {
-      en: `Connection failed: ${e.message}`,
-      fr: `Échec de la connexion : ${e.message}`,
-    };
+    return testFailed(e.message);
   }
 });
 
@@ -144,16 +131,10 @@ gladys.onAction('reconnect', async () => {
   try {
     await manager.disconnectAll();
     const devices = await publishDevices();
-    return {
-      en: `Reconnected: ${devices.length} bulb(s) available.`,
-      fr: `Reconnexion effectuée : ${devices.length} ampoule(s) disponible(s).`,
-    };
+    return reconnectOk(devices.length);
   } catch (e) {
     logger.error('Yeelight reconnection failed', e);
-    return {
-      en: `Reconnection failed: ${e.message}`,
-      fr: `Échec de la reconnexion : ${e.message}`,
-    };
+    return reconnectFailed(e.message);
   }
 });
 
@@ -172,12 +153,7 @@ gladys.on('connected', async () => {
     await publishDevices();
   } catch (err) {
     logger.error('Post-connection initialization failed', err);
-    await gladys
-      .setConnectionStatus(false, {
-        en: 'Initialization failed, check the integration logs.',
-        fr: "L'initialisation a échoué, consultez les logs de l'intégration.",
-      })
-      .catch(() => {});
+    await gladys.setConnectionStatus(false, MESSAGES.initFailed).catch(() => {});
   }
 });
 
