@@ -1,0 +1,47 @@
+[
+  {
+    "id": "0x0000000000000001",
+    "host": "192.168.1.41",
+    "port": 55443,
+    "model": "color",
+    "firmwareVersion": "18",
+    "support": "get_prop set_default set_power toggle set_bright start_cf stop_cf set_scene cron_add cron_get cron_del set_ct_abx set_rgb set_hsv set_adjust adjust_bright adjust_ct adjust_color set_music set_name",
+    "name": "Salon"
+  },
+  {
+    "id": "0x0000000000000002",
+    "host": "192.168.1.42",
+    "port": 55443,
+    "model": "ceiling4",
+    "firmwareVersion": "45",
+    "support": "get_prop set_default set_power toggle set_bright set_bright set_scene cron_add cron_get cron_del start_cf stop_cf set_ct_abx set_name set_adjust adjust_bright adjust_ct bg_set_rgb bg_set_hsv bg_set_ct_abx bg_start_cf bg_stop_cf bg_set_scene bg_set_default bg_set_power bg_set_bright bg_set_adjust bg_adjust_bright bg_adjust_color bg_adjust_ct bg_toggle dev_toggle",
+    "name": "Plafonnier"
+  },
+  {
+    "id": "0x0000000000000003",
+    "host": "192.168.1.43",
+    "port": 55443,
+    "model": "strip6",
+    "firmwareVersion": "20",
+    "support": "get_prop set_default set_power toggle set_bright set_scene cron_add cron_get cron_del start_cf stop_cf set_ct_abx set_name set_adjust adjust_bright adjust_color set_rgb set_hsv set_music",
+    "name": ""
+  },
+  {
+    "id": "0x0000000000000004",
+    "host": "192.168.1.44",
+    "port": 55443,
+    "model": "mono",
+    "firmwareVersion": "56",
+    "support": "get_prop set_default set_power toggle set_bright start_cf stop_cf set_scene cron_add cron_get cron_del set_adjust set_name",
+    "name": "Couloir"
+  },
+  {
+    "id": "manual-192-168-1-45",
+    "host": "192.168.1.45",
+    "port": 55443,
+    "model": "",
+    "firmwareVersion": "",
+    "support": "get_prop set_power toggle set_bright set_rgb set_ct_abx",
+    "name": ""
+  }
+]

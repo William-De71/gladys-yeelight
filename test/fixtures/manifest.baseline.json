@@ -1,0 +1,41 @@
+{
+  "generated_from": "v1.2.1",
+  "type": "device",
+  "transports": ["local"],
+  "network_discovery": [
+    {
+      "type": "udp-active-broadcast",
+      "ports": [1982]
+    }
+  ],
+  "config_schema": [
+    {
+      "key": "intro",
+      "type": "section",
+      "required": false
+    },
+    {
+      "key": "transition_duration",
+      "type": "number",
+      "required": false,
+      "default": 500
+    },
+    {
+      "key": "advanced",
+      "type": "section",
+      "required": false
+    },
+    {
+      "key": "bulbs",
+      "type": "string",
+      "required": false
+    },
+    {
+      "key": "scan_duration",
+      "type": "number",
+      "required": false,
+      "default": 5
+    }
+  ],
+  "actions": ["test_connection", "reconnect"]
+}

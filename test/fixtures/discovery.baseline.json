@@ -1,0 +1,362 @@
+{
+  "generated_from": "v1.2.1",
+  "devices": [
+    {
+      "name": "Salon",
+      "external_id": "ext:ext-yeelight:yeelight:0x0000000000000001",
+      "params": [
+        {
+          "name": "ADDRESS",
+          "value": "192.168.1.41:55443"
+        },
+        {
+          "name": "MODEL",
+          "value": "color"
+        },
+        {
+          "name": "FIRMWARE_VERSION",
+          "value": "18"
+        },
+        {
+          "name": "SUPPORTED_METHODS",
+          "value": "get_prop set_default set_power toggle set_bright start_cf stop_cf set_scene cron_add cron_get cron_del set_ct_abx set_rgb set_hsv set_adjust adjust_bright adjust_ct adjust_color set_music set_name"
+        }
+      ],
+      "features": [
+        {
+          "name": "On/Off",
+          "external_id": "ext:ext-yeelight:yeelight:0x0000000000000001:power",
+          "category": "light",
+          "type": "binary",
+          "read_only": false,
+          "keep_history": true,
+          "has_feedback": true,
+          "min": 0,
+          "max": 1
+        },
+        {
+          "name": "Brightness",
+          "external_id": "ext:ext-yeelight:yeelight:0x0000000000000001:brightness",
+          "category": "light",
+          "type": "brightness",
+          "read_only": false,
+          "keep_history": true,
+          "has_feedback": true,
+          "min": 1,
+          "max": 100,
+          "unit": "percent"
+        },
+        {
+          "name": "Colour",
+          "external_id": "ext:ext-yeelight:yeelight:0x0000000000000001:color",
+          "category": "light",
+          "type": "color",
+          "read_only": false,
+          "keep_history": true,
+          "has_feedback": true,
+          "min": 1,
+          "max": 16777215
+        },
+        {
+          "name": "Colour temperature",
+          "external_id": "ext:ext-yeelight:yeelight:0x0000000000000001:temperature",
+          "category": "light",
+          "type": "temperature",
+          "read_only": false,
+          "keep_history": true,
+          "has_feedback": true,
+          "min": 154,
+          "max": 588
+        }
+      ]
+    },
+    {
+      "name": "Plafonnier",
+      "external_id": "ext:ext-yeelight:yeelight:0x0000000000000002",
+      "params": [
+        {
+          "name": "ADDRESS",
+          "value": "192.168.1.42:55443"
+        },
+        {
+          "name": "MODEL",
+          "value": "ceiling4"
+        },
+        {
+          "name": "FIRMWARE_VERSION",
+          "value": "45"
+        },
+        {
+          "name": "SUPPORTED_METHODS",
+          "value": "get_prop set_default set_power toggle set_bright set_bright set_scene cron_add cron_get cron_del start_cf stop_cf set_ct_abx set_name set_adjust adjust_bright adjust_ct bg_set_rgb bg_set_hsv bg_set_ct_abx bg_start_cf bg_stop_cf bg_set_scene bg_set_default bg_set_power bg_set_bright bg_set_adjust bg_adjust_bright bg_adjust_color bg_adjust_ct bg_toggle dev_toggle"
+        }
+      ],
+      "features": [
+        {
+          "name": "Main light",
+          "external_id": "ext:ext-yeelight:yeelight:0x0000000000000002:power",
+          "category": "light",
+          "type": "binary",
+          "read_only": false,
+          "keep_history": true,
+          "has_feedback": true,
+          "min": 0,
+          "max": 1
+        },
+        {
+          "name": "Main brightness",
+          "external_id": "ext:ext-yeelight:yeelight:0x0000000000000002:brightness",
+          "category": "light",
+          "type": "brightness",
+          "read_only": false,
+          "keep_history": true,
+          "has_feedback": true,
+          "min": 1,
+          "max": 100,
+          "unit": "percent"
+        },
+        {
+          "name": "Main colour temperature",
+          "external_id": "ext:ext-yeelight:yeelight:0x0000000000000002:temperature",
+          "category": "light",
+          "type": "temperature",
+          "read_only": false,
+          "keep_history": true,
+          "has_feedback": true,
+          "min": 154,
+          "max": 370
+        },
+        {
+          "name": "Ambient light",
+          "external_id": "ext:ext-yeelight:yeelight:0x0000000000000002:bg_power",
+          "category": "light",
+          "type": "binary",
+          "read_only": false,
+          "keep_history": true,
+          "has_feedback": true,
+          "min": 0,
+          "max": 1
+        },
+        {
+          "name": "Ambient brightness",
+          "external_id": "ext:ext-yeelight:yeelight:0x0000000000000002:bg_brightness",
+          "category": "light",
+          "type": "brightness",
+          "read_only": false,
+          "keep_history": true,
+          "has_feedback": true,
+          "min": 1,
+          "max": 100,
+          "unit": "percent"
+        },
+        {
+          "name": "Ambient colour",
+          "external_id": "ext:ext-yeelight:yeelight:0x0000000000000002:bg_color",
+          "category": "light",
+          "type": "color",
+          "read_only": false,
+          "keep_history": true,
+          "has_feedback": true,
+          "min": 1,
+          "max": 16777215
+        },
+        {
+          "name": "Ambient colour temperature",
+          "external_id": "ext:ext-yeelight:yeelight:0x0000000000000002:bg_temperature",
+          "category": "light",
+          "type": "temperature",
+          "read_only": false,
+          "keep_history": true,
+          "has_feedback": true,
+          "min": 154,
+          "max": 370
+        },
+        {
+          "name": "Night light",
+          "external_id": "ext:ext-yeelight:yeelight:0x0000000000000002:night_light",
+          "category": "light",
+          "type": "binary",
+          "read_only": false,
+          "keep_history": true,
+          "has_feedback": true,
+          "min": 0,
+          "max": 1
+        }
+      ]
+    },
+    {
+      "name": "Yeelight strip6",
+      "external_id": "ext:ext-yeelight:yeelight:0x0000000000000003",
+      "params": [
+        {
+          "name": "ADDRESS",
+          "value": "192.168.1.43:55443"
+        },
+        {
+          "name": "MODEL",
+          "value": "strip6"
+        },
+        {
+          "name": "FIRMWARE_VERSION",
+          "value": "20"
+        },
+        {
+          "name": "SUPPORTED_METHODS",
+          "value": "get_prop set_default set_power toggle set_bright set_scene cron_add cron_get cron_del start_cf stop_cf set_ct_abx set_name set_adjust adjust_bright adjust_color set_rgb set_hsv set_music"
+        }
+      ],
+      "features": [
+        {
+          "name": "On/Off",
+          "external_id": "ext:ext-yeelight:yeelight:0x0000000000000003:power",
+          "category": "light",
+          "type": "binary",
+          "read_only": false,
+          "keep_history": true,
+          "has_feedback": true,
+          "min": 0,
+          "max": 1
+        },
+        {
+          "name": "Brightness",
+          "external_id": "ext:ext-yeelight:yeelight:0x0000000000000003:brightness",
+          "category": "light",
+          "type": "brightness",
+          "read_only": false,
+          "keep_history": true,
+          "has_feedback": true,
+          "min": 1,
+          "max": 100,
+          "unit": "percent"
+        },
+        {
+          "name": "Colour",
+          "external_id": "ext:ext-yeelight:yeelight:0x0000000000000003:color",
+          "category": "light",
+          "type": "color",
+          "read_only": false,
+          "keep_history": true,
+          "has_feedback": true,
+          "min": 1,
+          "max": 16777215
+        }
+      ]
+    },
+    {
+      "name": "Couloir",
+      "external_id": "ext:ext-yeelight:yeelight:0x0000000000000004",
+      "params": [
+        {
+          "name": "ADDRESS",
+          "value": "192.168.1.44:55443"
+        },
+        {
+          "name": "MODEL",
+          "value": "mono"
+        },
+        {
+          "name": "FIRMWARE_VERSION",
+          "value": "56"
+        },
+        {
+          "name": "SUPPORTED_METHODS",
+          "value": "get_prop set_default set_power toggle set_bright start_cf stop_cf set_scene cron_add cron_get cron_del set_adjust set_name"
+        }
+      ],
+      "features": [
+        {
+          "name": "On/Off",
+          "external_id": "ext:ext-yeelight:yeelight:0x0000000000000004:power",
+          "category": "light",
+          "type": "binary",
+          "read_only": false,
+          "keep_history": true,
+          "has_feedback": true,
+          "min": 0,
+          "max": 1
+        },
+        {
+          "name": "Brightness",
+          "external_id": "ext:ext-yeelight:yeelight:0x0000000000000004:brightness",
+          "category": "light",
+          "type": "brightness",
+          "read_only": false,
+          "keep_history": true,
+          "has_feedback": true,
+          "min": 1,
+          "max": 100,
+          "unit": "percent"
+        }
+      ]
+    },
+    {
+      "name": "Yeelight",
+      "external_id": "ext:ext-yeelight:yeelight:manual-192-168-1-45",
+      "params": [
+        {
+          "name": "ADDRESS",
+          "value": "192.168.1.45:55443"
+        },
+        {
+          "name": "MODEL",
+          "value": ""
+        },
+        {
+          "name": "FIRMWARE_VERSION",
+          "value": ""
+        },
+        {
+          "name": "SUPPORTED_METHODS",
+          "value": "get_prop set_power toggle set_bright set_rgb set_ct_abx"
+        }
+      ],
+      "features": [
+        {
+          "name": "On/Off",
+          "external_id": "ext:ext-yeelight:yeelight:manual-192-168-1-45:power",
+          "category": "light",
+          "type": "binary",
+          "read_only": false,
+          "keep_history": true,
+          "has_feedback": true,
+          "min": 0,
+          "max": 1
+        },
+        {
+          "name": "Brightness",
+          "external_id": "ext:ext-yeelight:yeelight:manual-192-168-1-45:brightness",
+          "category": "light",
+          "type": "brightness",
+          "read_only": false,
+          "keep_history": true,
+          "has_feedback": true,
+          "min": 1,
+          "max": 100,
+          "unit": "percent"
+        },
+        {
+          "name": "Colour",
+          "external_id": "ext:ext-yeelight:yeelight:manual-192-168-1-45:color",
+          "category": "light",
+          "type": "color",
+          "read_only": false,
+          "keep_history": true,
+          "has_feedback": true,
+          "min": 1,
+          "max": 16777215
+        },
+        {
+          "name": "Colour temperature",
+          "external_id": "ext:ext-yeelight:yeelight:manual-192-168-1-45:temperature",
+          "category": "light",
+          "type": "temperature",
+          "read_only": false,
+          "keep_history": true,
+          "has_feedback": true,
+          "min": 154,
+          "max": 588
+        }
+      ]
+    }
+  ]
+}
