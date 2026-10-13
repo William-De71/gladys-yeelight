@@ -168,7 +168,7 @@ Three scenes to start with:
 2. In the Yeelight app, enable **LAN Control** on each light.
 3. **Discover → Scan**, then add the lights you want.
 
-Since the scene triggers and actions, the integration requires Gladys 5.1.0: an older Gladys no longer receives its updates and stays on version 1.2.1 until Gladys itself is updated. The [user documentation](docs/en.md) details the network requirements, the lights added by hand, the ceiling lights with an ambient ring, the scenes and the troubleshooting.
+Since the scene triggers and actions, the integration requires Gladys 5.1.0: an older Gladys no longer receives its updates and stays on version 1.3.0 until Gladys itself is updated. The [user documentation](docs/en.md) details the network requirements, the lights added by hand, the ceiling lights with an ambient ring, the scenes and the troubleshooting.
 
 ## Development
 
@@ -226,7 +226,7 @@ npm run format:check   # Prettier, as the CI runs it
 npx github:GladysAssistant/integration-store . --skip-image-check
 ```
 
-`test/structure.test.js` compares the discovery with `test/fixtures/discovery.baseline.json`, generated from v1.2.1 with a color bulb, a ceiling light with an ambient ring and a night light, an RGB-only strip, a white bulb and a light added by hand: an external id, a category, a type, a unit or a bound that changes would force users to recreate their devices. `test/app.test.js` drives the handlers with the fake Gladys of the SDK, and `test/i18n.test.js` checks the four languages of the manifest, the messages, the docs and these READMEs.
+`test/structure.test.js` compares the discovery with `test/fixtures/discovery.baseline.json`, generated from v1.3.0 with a color bulb, a ceiling light with an ambient ring and a night light, an RGB-only strip, a white bulb and a light added by hand: an external id, a category, a type, a unit or a bound that changes would force users to recreate their devices. `test/app.test.js` drives the handlers with the fake Gladys of the SDK, and `test/i18n.test.js` checks the four languages of the manifest, the messages, the docs and these READMEs.
 
 ## Release
 

@@ -1,17 +1,17 @@
 // -----------------------------------------------------------------------------
-// Structure non-regression: what users of 1.2.1 already created must keep its
+// Structure non-regression: what users of 1.3.0 already created must keep its
 // meaning.
 //
 // The discovery "Update" button of Gladys compares the forever fields of each
 // feature (external_id, category, type, unit, min, max); a change there forces
 // the user to delete and recreate a device, losing its history and its scenes.
 //
-// test/fixtures/discovery.baseline.json was generated from the v1.2.1 code,
+// test/fixtures/discovery.baseline.json was generated from the v1.3.0 code,
 // before any change of this version, from the bulbs of
 // test/fixtures/discovery.bulbs.json: a colour bulb, a ceiling light with an
 // ambient ring and a night light, an RGB-only strip, a white bulb and a light
 // added by hand. test/fixtures/manifest.baseline.json holds the configuration
-// and action keys of 1.2.1. A difference is a breaking change: it needs an
+// and action keys of 1.3.0. A difference is a breaking change: it needs an
 // entry in ALLOWED_CHANGES with its migration, in the changelog, the docs and
 // the forum message.
 // -----------------------------------------------------------------------------
@@ -51,7 +51,7 @@ function currentDevices() {
   return bulbs.map((bulb) => buildDevice(gladys, bulb));
 }
 
-test('the devices of 1.2.1 keep their external id and params', () => {
+test('the devices of 1.3.0 keep their external id and params', () => {
   const now = currentDevices();
   assert.equal(now.length, baseline.devices.length);
   baseline.devices.forEach((before, index) => {
@@ -64,7 +64,7 @@ test('the devices of 1.2.1 keep their external id and params', () => {
   assert.deepEqual(ALLOWED_CHANGES, []);
 });
 
-test('every feature of 1.2.1 is still discovered with the same forever fields', () => {
+test('every feature of 1.3.0 is still discovered with the same forever fields', () => {
   const now = currentDevices();
   baseline.devices.forEach((before, index) => {
     const features = new Map(now[index].features.map((feature) => [feature.external_id, feature]));
@@ -86,7 +86,7 @@ test('no feature id is published twice on one device', () => {
   }
 });
 
-test('the configuration and action keys of 1.2.1 are kept, with their types', () => {
+test('the configuration and action keys of 1.3.0 are kept, with their types', () => {
   const current = new Map(manifest.config_schema.map((field) => [field.key, field]));
   for (const field of manifestBaseline.config_schema) {
     const now = current.get(field.key);
@@ -106,7 +106,7 @@ test('the configuration and action keys of 1.2.1 are kept, with their types', ()
   }
 });
 
-test('the type, the transport and the network discovery of 1.2.1 are kept', () => {
+test('the type, the transport and the network discovery of 1.3.0 are kept', () => {
   assert.equal(manifest.type, manifestBaseline.type);
   assert.deepEqual(manifest.transports, manifestBaseline.transports);
   assert.deepEqual(manifest.network_discovery, manifestBaseline.network_discovery);

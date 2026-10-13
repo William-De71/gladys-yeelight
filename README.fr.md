@@ -168,7 +168,7 @@ Trois scènes pour commencer :
 2. Dans l'application Yeelight, activez **Contrôle LAN** sur chaque lampe.
 3. **Découverte → Scanner**, puis ajoutez les lampes de votre choix.
 
-Depuis les déclencheurs et actions de scène, l'intégration exige Gladys 5.1.0 : un Gladys plus ancien ne reçoit plus ses mises à jour et reste en version 1.2.1 jusqu'à ce que Gladys lui-même soit mis à jour. La [documentation utilisateur](docs/fr.md) détaille les prérequis réseau, les lampes ajoutées à la main, les plafonniers à anneau d'ambiance, les scènes et la résolution de problèmes.
+Depuis les déclencheurs et actions de scène, l'intégration exige Gladys 5.1.0 : un Gladys plus ancien ne reçoit plus ses mises à jour et reste en version 1.3.0 jusqu'à ce que Gladys lui-même soit mis à jour. La [documentation utilisateur](docs/fr.md) détaille les prérequis réseau, les lampes ajoutées à la main, les plafonniers à anneau d'ambiance, les scènes et la résolution de problèmes.
 
 ## Développement
 
@@ -226,7 +226,7 @@ npm run format:check   # Prettier, comme le lance la CI
 npx github:GladysAssistant/integration-store . --skip-image-check
 ```
 
-`test/structure.test.js` compare la découverte à `test/fixtures/discovery.baseline.json`, généré depuis la v1.2.1 avec une ampoule couleur, un plafonnier à anneau d'ambiance et veilleuse, un ruban RVB seulement, une ampoule blanche et une lampe ajoutée à la main : un identifiant externe, une catégorie, un type, une unité ou une borne qui change obligerait les utilisateurs à recréer leurs appareils. `test/app.test.js` pilote les handlers avec le faux Gladys du SDK, et `test/i18n.test.js` vérifie les quatre langues du manifeste, des messages, des docs et de ces README.
+`test/structure.test.js` compare la découverte à `test/fixtures/discovery.baseline.json`, généré depuis la v1.3.0 avec une ampoule couleur, un plafonnier à anneau d'ambiance et veilleuse, un ruban RVB seulement, une ampoule blanche et une lampe ajoutée à la main : un identifiant externe, une catégorie, un type, une unité ou une borne qui change obligerait les utilisateurs à recréer leurs appareils. `test/app.test.js` pilote les handlers avec le faux Gladys du SDK, et `test/i18n.test.js` vérifie les quatre langues du manifeste, des messages, des docs et de ces README.
 
 ## Publication
 

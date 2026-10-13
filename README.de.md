@@ -168,7 +168,7 @@ Drei Szenen für den Anfang:
 2. Aktivieren Sie in der Yeelight-App **LAN-Steuerung** auf jeder Lampe.
 3. **Entdecken → Scannen**, dann die gewünschten Lampen hinzufügen.
 
-Seit den Szenen-Auslösern und -Aktionen setzt die Integration Gladys 5.1.0 voraus: Ein älteres Gladys erhält ihre Updates nicht mehr und bleibt auf Version 1.2.1, bis Gladys selbst aktualisiert wird. Die [Benutzerdokumentation](docs/de.md) erläutert die Netzwerkvoraussetzungen, die manuell hinzugefügten Lampen, die Deckenleuchten mit Ambientering, die Szenen und die Fehlerbehebung.
+Seit den Szenen-Auslösern und -Aktionen setzt die Integration Gladys 5.1.0 voraus: Ein älteres Gladys erhält ihre Updates nicht mehr und bleibt auf Version 1.3.0, bis Gladys selbst aktualisiert wird. Die [Benutzerdokumentation](docs/de.md) erläutert die Netzwerkvoraussetzungen, die manuell hinzugefügten Lampen, die Deckenleuchten mit Ambientering, die Szenen und die Fehlerbehebung.
 
 ## Entwicklung
 
@@ -226,7 +226,7 @@ npm run format:check   # Prettier, wie die CI es ausführt
 npx github:GladysAssistant/integration-store . --skip-image-check
 ```
 
-`test/structure.test.js` vergleicht die Suche mit `test/fixtures/discovery.baseline.json`, erzeugt aus v1.2.1 mit einer Farbbirne, einer Deckenleuchte mit Ambientering und Nachtlicht, einem reinen RGB-Streifen, einer weißen Glühbirne und einer manuell hinzugefügten Lampe: Eine externe Kennung, eine Kategorie, ein Typ, eine Einheit oder eine Grenze, die sich ändert, würde die Benutzer zwingen, ihre Geräte neu anzulegen. `test/app.test.js` steuert die Handler mit dem Fake-Gladys des SDK, und `test/i18n.test.js` prüft die vier Sprachen des Manifests, der Meldungen, der Dokumentation und dieser READMEs.
+`test/structure.test.js` vergleicht die Suche mit `test/fixtures/discovery.baseline.json`, erzeugt aus v1.3.0 mit einer Farbbirne, einer Deckenleuchte mit Ambientering und Nachtlicht, einem reinen RGB-Streifen, einer weißen Glühbirne und einer manuell hinzugefügten Lampe: Eine externe Kennung, eine Kategorie, ein Typ, eine Einheit oder eine Grenze, die sich ändert, würde die Benutzer zwingen, ihre Geräte neu anzulegen. `test/app.test.js` steuert die Handler mit dem Fake-Gladys des SDK, und `test/i18n.test.js` prüft die vier Sprachen des Manifests, der Meldungen, der Dokumentation und dieser READMEs.
 
 ## Veröffentlichung
 

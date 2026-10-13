@@ -168,7 +168,7 @@ Tres escenas para empezar:
 2. En la aplicación Yeelight, active **Control LAN** en cada luz.
 3. **Descubrir → Buscar**, y añada las luces que desee.
 
-Desde los activadores y acciones de escena, la integración requiere Gladys 5.1.0: un Gladys más antiguo ya no recibe sus actualizaciones y se queda en la versión 1.2.1 hasta que se actualice el propio Gladys. La [documentación de usuario](docs/es.md) detalla los requisitos de red, las luces añadidas a mano, los plafones con anillo ambiental, las escenas y la solución de problemas.
+Desde los activadores y acciones de escena, la integración requiere Gladys 5.1.0: un Gladys más antiguo ya no recibe sus actualizaciones y se queda en la versión 1.3.0 hasta que se actualice el propio Gladys. La [documentación de usuario](docs/es.md) detalla los requisitos de red, las luces añadidas a mano, los plafones con anillo ambiental, las escenas y la solución de problemas.
 
 ## Desarrollo
 
@@ -226,7 +226,7 @@ npm run format:check   # Prettier, tal como lo ejecuta la CI
 npx github:GladysAssistant/integration-store . --skip-image-check
 ```
 
-`test/structure.test.js` compara el descubrimiento con `test/fixtures/discovery.baseline.json`, generado a partir de la v1.2.1 con una bombilla de color, un plafón con anillo ambiental y luz nocturna, una tira solo RGB, una bombilla blanca y una luz añadida a mano: un identificador externo, una categoría, un tipo, una unidad o un límite que cambiara obligaría a los usuarios a volver a crear sus dispositivos. `test/app.test.js` controla los handlers con el Gladys simulado del SDK, y `test/i18n.test.js` comprueba los cuatro idiomas del manifiesto, de los mensajes, de la documentación y de estos README.
+`test/structure.test.js` compara el descubrimiento con `test/fixtures/discovery.baseline.json`, generado a partir de la v1.3.0 con una bombilla de color, un plafón con anillo ambiental y luz nocturna, una tira solo RGB, una bombilla blanca y una luz añadida a mano: un identificador externo, una categoría, un tipo, una unidad o un límite que cambiara obligaría a los usuarios a volver a crear sus dispositivos. `test/app.test.js` controla los handlers con el Gladys simulado del SDK, y `test/i18n.test.js` comprueba los cuatro idiomas del manifiesto, de los mensajes, de la documentación y de estos README.
 
 ## Publicación
 

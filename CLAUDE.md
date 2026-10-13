@@ -64,7 +64,7 @@ src/yeelight/convert.js          values both ways (temperature in mired on the G
   output `light_name`. `test/structure.test.js` checks the discovery against
   `test/fixtures/discovery.baseline.json` (built from
   `test/fixtures/discovery.bulbs.json`) and the manifest against
-  `test/fixtures/manifest.baseline.json` (v1.2.1). A change needs an entry in
+  `test/fixtures/manifest.baseline.json` (v1.3.0). A change needs an entry in
   its `ALLOWED_CHANGES` with the migration, in the changelog, the docs and the
   forum message: users would have to delete and recreate their devices.
 - **Features follow the `support` header** the light advertises, never a model
