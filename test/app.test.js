@@ -154,6 +154,20 @@ test('a pushed change reaches the created device', async () => {
   await app.shutdown();
 });
 
+test('a value that did not change is not published again', async () => {
+  const { gladys, manager, app } = await start();
+  await gladys.fake.deviceCreated(createdDevice(gladys));
+  manager.push({ bright: '75' });
+  manager.push({ bright: '75' });
+  manager.push({ bright: '76' });
+  await settle();
+  const values = gladys.fake.states
+    .filter((state) => state.device_feature_external_id.endsWith(':brightness'))
+    .map((state) => state.state);
+  assert.deepEqual(values, [40, 75, 76]);
+  await app.shutdown();
+});
+
 test('a command from Gladys reaches the light', async () => {
   const { gladys, manager, app } = await start();
   const device = createdDevice(gladys);

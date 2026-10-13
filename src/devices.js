@@ -37,6 +37,9 @@ const READ_BACK_MARGIN_MS = 250;
 // push channel still reports the change when the fade ends.
 const READ_BACK_MAX_WAIT_MS = 1500;
 
+// An unchanged state is published again once this old.
+const STATE_HEARTBEAT_MS = 60 * 60 * 1000;
+
 // A scan in flight, shared by concurrent callers. The core rate-limits network
 // scans (1 per 10 s per integration), and a user clicking "Scan" twice must not
 // turn the second click into a 429 that empties the Discover screen.
@@ -276,7 +279,10 @@ export async function publishBulbState(gladys, bulbId, props) {
   });
 
   if (states.length > 0) {
-    await gladys.publishStates(states);
+    // Only the values that moved: a power read-back or a heartbeat re-reads
+    // every feature, and most of them did not change. The hourly heartbeat
+    // keeps a stable value recently dated in Gladys.
+    await gladys.publishChangedStates(states, { heartbeat: STATE_HEARTBEAT_MS });
   }
 }
 

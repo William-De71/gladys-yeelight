@@ -36,6 +36,10 @@ export function fakeGladys({ selector = 'ext-dev-yeelight', devices = [], scanRe
     publishStates: async (states) => {
       published.states.push(...states);
     },
+    publishChangedStates: async (states) => {
+      published.states.push(...states);
+      return { success: true, count: states.length };
+    },
     publishDiscoveredDevices: async (list) => {
       published.devices = list;
     },
