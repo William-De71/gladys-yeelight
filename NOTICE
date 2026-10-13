@@ -1,0 +1,12 @@
+gladys-yeelight
+Copyright 2026 William-De71 and the gladys-yeelight contributors
+
+This product includes software developed by William-De71 and contributors
+(https://github.com/William-De71/gladys-yeelight), licensed under the Apache
+License, Version 2.0.
+
+It implements the Yeelight WiFi Light Inter-Operation Specification, published
+by Yeelight, with no third-party runtime library besides the Gladys SDK.
+
+Yeelight is a trademark of its owner. This project is not affiliated with,
+endorsed by or sponsored by Yeelight or Xiaomi.

@@ -1,0 +1,50 @@
+name: Bug report
+description: Something does not work as described in the documentation.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a problem. First check that "LAN Control" is enabled for the light in the Yeelight app: without it, a light is neither found nor controllable.
+  - type: input
+    id: gladys-version
+    attributes:
+      label: Gladys version
+      description: Settings → System.
+      placeholder: '5.1.4'
+    validations:
+      required: true
+  - type: input
+    id: integration-version
+    attributes:
+      label: Integration version
+      description: The Supervision tab of the integration in Gladys.
+      placeholder: '1.3.0'
+    validations:
+      required: true
+  - type: input
+    id: light-model
+    attributes:
+      label: Light model and firmware
+      description: The MODEL and FIRMWARE params of the device in Gladys (or the product name in the Yeelight app).
+      placeholder: 'color4, firmware 18 (Yeelight Smart LED Bulb 1S Color)'
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened, and what you expected
+      description: A light missing from the discovery, a state that does not change, a command with no effect, a light that does not reconnect…
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: |
+        Logs of the integration (its Supervision tab in Gladys), ideally with the SDK debug logs: add the environment variable `DEBUG=gladys-integration-sdk` to the container, reproduce, then copy the lines.
+      render: text
