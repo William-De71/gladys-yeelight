@@ -80,6 +80,8 @@ export class YeelightClient extends EventEmitter {
     // queried the power state before every step burned three of them per move.
     /** @type {Record<string, string>} */
     this.state = {};
+    /** Last time the bulb sent anything (ms since the epoch). */
+    this.lastSeen = 0;
   }
 
   /**
@@ -138,6 +140,7 @@ export class YeelightClient extends EventEmitter {
 
         this.socket = socket;
         this.connected = true;
+        this.lastSeen = Date.now();
         socket.setEncoding('utf8');
         socket.on('data', (chunk) => this.handleData(chunk));
         socket.on('error', (err) => {
@@ -157,6 +160,7 @@ export class YeelightClient extends EventEmitter {
    * @returns {void}
    */
   handleData(chunk) {
+    this.lastSeen = Date.now();
     this.buffer += chunk;
 
     let index = this.buffer.indexOf(MESSAGE_TERMINATOR);
@@ -377,6 +381,20 @@ export class YeelightClient extends EventEmitter {
     });
     this.remember(props);
     return props;
+  }
+
+  /**
+   * Drop a connection that stopped answering, AS a disconnection: unlike
+   * `disconnect`, the `disconnect` event fires, so the manager reports the
+   * light unreachable and starts reconnecting.
+   * @returns {void}
+   * @example
+   * client.abort();
+   */
+  abort() {
+    if (this.socket) {
+      this.socket.destroy();
+    }
   }
 
   /**

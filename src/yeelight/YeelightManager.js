@@ -19,6 +19,7 @@ import {
   DEFAULT_CONTROL_PORT,
   RECONNECT_INITIAL_DELAY_MS,
   RECONNECT_MAX_DELAY_MS,
+  HEARTBEAT_INTERVAL_MS,
 } from './constants.js';
 
 const logger = createLogger({ name: 'yeelight-manager' });
@@ -53,6 +54,60 @@ export class YeelightManager {
     // Set on shutdown so a socket closing during teardown does not schedule a
     // reconnection that would keep the process alive.
     this.stopped = false;
+    /** @type {NodeJS.Timeout|null} */
+    this.heartbeatTimer = null;
+  }
+
+  /**
+   * Probe, every `intervalMs`, the connections that stayed silent that long.
+   *
+   * A lamp cut at the wall switch never closes its session: without this, it
+   * kept its "local" badge and Gladys kept sending it commands into the void.
+   * The probe reads the power state; a lamp that does not answer within the
+   * command timeout is dropped, which reports it unreachable and starts the
+   * reconnection backoff. Idempotent.
+   * @param {number} [intervalMs] - Probe period and silence threshold.
+   * @returns {void}
+   * @example
+   * manager.startHeartbeat();
+   */
+  startHeartbeat(intervalMs = HEARTBEAT_INTERVAL_MS) {
+    if (this.heartbeatTimer) {
+      return;
+    }
+    this.heartbeatTimer = setInterval(() => this.probeIdleClients(intervalMs), intervalMs);
+    if (typeof this.heartbeatTimer.unref === 'function') {
+      this.heartbeatTimer.unref();
+    }
+  }
+
+  /**
+   * Stop the heartbeat.
+   * @returns {void}
+   */
+  stopHeartbeat() {
+    clearInterval(this.heartbeatTimer);
+    this.heartbeatTimer = null;
+  }
+
+  /**
+   * Probe every connection silent for at least `idleMs`.
+   * @param {number} idleMs - The silence threshold.
+   * @returns {Promise<void>} Resolves once every probe settled.
+   */
+  async probeIdleClients(idleMs) {
+    const now = Date.now();
+    const probes = [...this.clients.entries()]
+      .filter(([, client]) => client.connected && now - client.lastSeen >= idleMs)
+      .map(async ([bulbId, client]) => {
+        try {
+          await client.getProps(['power']);
+        } catch (e) {
+          logger.info(`Yeelight bulb "${bulbId}" stopped answering (${e.message})`);
+          client.abort();
+        }
+      });
+    await Promise.all(probes);
   }
 
   /**
@@ -287,6 +342,9 @@ export class YeelightManager {
     // Set BEFORE closing the sockets: each `close` fires the disconnect
     // handler, which would otherwise schedule a reconnection for every bulb.
     this.stopped = true;
+    if (permanent) {
+      this.stopHeartbeat();
+    }
     this.reconnectTimers.forEach((timer) => clearTimeout(timer));
     this.reconnectTimers.clear();
     this.reconnectDelays.clear();

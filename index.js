@@ -151,6 +151,8 @@ gladys.on('connected', async () => {
     // Load the devices the user created, so a pushed state finds its feature.
     await gladys.getDevices();
     await publishDevices();
+    // A lamp cut at the wall keeps a half-open session: probe the silent ones.
+    manager.startHeartbeat();
   } catch (err) {
     logger.error('Post-connection initialization failed', err);
     await gladys.setConnectionStatus(false, MESSAGES.initFailed).catch(() => {});

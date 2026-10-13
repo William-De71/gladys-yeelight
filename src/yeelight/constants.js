@@ -73,6 +73,14 @@ export const CONNECT_TIMEOUT_MS = 5000;
 export const RECONNECT_INITIAL_DELAY_MS = 5000;
 export const RECONNECT_MAX_DELAY_MS = 300000;
 
+// --- Liveness ----------------------------------------------------------------
+// A lamp cut at the wall switch never closes its TCP session: the socket stays
+// half-open, nothing arrives, and without a probe the light would look
+// connected for hours. A connection silent for this long is asked for its power
+// state; no answer within COMMAND_TIMEOUT_MS drops it. One command per minute
+// and per lamp, against a quota of 60.
+export const HEARTBEAT_INTERVAL_MS = 60000;
+
 // --- Value ranges (spec table 4-2) -------------------------------------------
 // Brightness is a PERCENTAGE and its minimum is 1, not 0: a bulb has no "0%"
 // state, `off` is carried by the power property instead. Sending 0 is refused.
