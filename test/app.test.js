@@ -7,10 +7,15 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { createFakeGladys } from '@gladysassistant/integration-sdk/testing';
 import { createApp } from '../src/app.js';
+import { EFFECTS } from '../src/yeelight/effects.js';
 import { discoveryPayload } from './helpers/fakeGladys.js';
 
+const manifest = JSON.parse(
+  readFileSync(new URL('../gladys-assistant-integration.json', import.meta.url), 'utf8'),
+);
 const BULB_ID = '0x000000000015243f';
 const DEVICE_ID = `ext:ext-yeelight:yeelight:${BULB_ID}`;
 
@@ -90,15 +95,25 @@ const settle = (ms = 50) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * A connected fake Gladys running the integration, its light found by the scan.
- * @param {object} [options] - `devices` the user created, `appOptions`.
+ * @param {object} [options] - `devices` the user created, `appOptions`, discovery `headers`.
  * @returns {Promise<{ gladys: object, manager: FakeManager, app: object }>} The parts.
  */
-export async function start({ devices = [], appOptions = {} } = {}) {
+export async function start({ devices = [], appOptions = {}, headers = {} } = {}) {
   const gladys = createFakeGladys({
     selector: 'ext-yeelight',
     devices,
     config: { scan_duration: 3, transition_duration: 0 },
-    scanResults: { 'udp-active-broadcast': [{ payload_base64: discoveryPayload() }] },
+    scanResults: {
+      'udp-active-broadcast': [
+        {
+          payload_base64: discoveryPayload({
+            support:
+              'get_prop set_default set_power toggle set_bright start_cf stop_cf set_scene set_ct_abx set_rgb',
+            ...headers,
+          }),
+        },
+      ],
+    },
   });
   const manager = new FakeManager();
   const app = createApp(gladys, { manager, ...appOptions });
@@ -202,5 +217,134 @@ test('the connection test reports the lights found, in four languages', async ()
   assert.equal(ack.success, true);
   assert.deepEqual(Object.keys(ack.data.message).sort(), ['de', 'en', 'es', 'fr']);
   assert.match(ack.data.message.en, /1/);
+  await app.shutdown();
+});
+
+test('a created light that stays unreachable fires light_offline, then light_online', async () => {
+  const { gladys, manager, app } = await start({ appOptions: { sceneEvents: { graceMs: 30 } } });
+  const device = createdDevice(gladys);
+  gladys.fake.devices.push(device);
+  await gladys.getDevices();
+  manager.drop();
+  await settle(80);
+  manager.back();
+  await settle();
+  assert.deepEqual(
+    gladys.fake.sceneEvents.map((event) => event.key),
+    ['light_offline', 'light_online'],
+  );
+  const [offline, online] = gladys.fake.sceneEvents;
+  assert.deepEqual(offline.data, {
+    light: DEVICE_ID,
+    name: device.name,
+    address: '192.168.1.239:55443',
+  });
+  assert.equal(online.data.offline_minutes, 0);
+  await app.shutdown();
+});
+
+test('a light back within the grace period fires nothing', async () => {
+  const { gladys, manager, app } = await start({ appOptions: { sceneEvents: { graceMs: 200 } } });
+  gladys.fake.devices.push(createdDevice(gladys));
+  await gladys.getDevices();
+  manager.drop();
+  await settle(20);
+  manager.back();
+  await settle(250);
+  assert.deepEqual(gladys.fake.sceneEvents, []);
+  await app.shutdown();
+});
+
+test('a light the user did not create fires no scene event', async () => {
+  const { gladys, manager, app } = await start({ appOptions: { sceneEvents: { graceMs: 10 } } });
+  manager.drop();
+  await settle();
+  assert.deepEqual(gladys.fake.sceneEvents, []);
+  await app.shutdown();
+});
+
+test('start_effect sends the flow through set_scene and names the light', async () => {
+  const { gladys, manager, app } = await start();
+  const device = createdDevice(gladys);
+  gladys.fake.devices.push(device);
+  await gladys.getDevices();
+  manager.props.power = 'off';
+  const ack = await gladys.fake.sceneAction('start_effect', {
+    light: DEVICE_ID,
+    effect: 'alert',
+    duration_minutes: 15,
+  });
+  assert.equal(ack.success, true);
+  assert.deepEqual(ack.data, { outputs: { light_name: device.name } });
+  const command = manager.commands.at(-1);
+  assert.equal(command.method, 'set_scene');
+  assert.deepEqual(command.params.slice(0, 3), ['cf', 10, 2], 'off before, off after');
+  assert.deepEqual(gladys.fake.sceneEvents, [], 'an action never fires a trigger');
+  await app.shutdown();
+});
+
+test('stop_effect stops the colour flow', async () => {
+  const { gladys, manager, app } = await start();
+  gladys.fake.devices.push(createdDevice(gladys));
+  await gladys.getDevices();
+  const ack = await gladys.fake.sceneAction('stop_effect', { light: DEVICE_ID });
+  assert.equal(ack.success, true);
+  assert.deepEqual(manager.commands.at(-1), { bulbId: BULB_ID, method: 'stop_cf', params: [] });
+  await app.shutdown();
+});
+
+test('start_effect refuses a light whose firmware has no effects', async () => {
+  const { gladys, app } = await start({
+    headers: { support: 'get_prop set_power toggle set_bright set_rgb' },
+  });
+  gladys.fake.devices.push(createdDevice(gladys));
+  await gladys.getDevices();
+  const ack = await gladys.fake.sceneAction('start_effect', { light: DEVICE_ID, effect: 'notify' });
+  assert.equal(ack.success, false);
+  assert.match(ack.error, /does not support effects/);
+  await app.shutdown();
+});
+
+test('a scene action on an unknown light or effect fails with a clear message', async () => {
+  const { gladys, app } = await start();
+  gladys.fake.devices.push(createdDevice(gladys));
+  await gladys.getDevices();
+  const unknownLight = await gladys.fake.sceneAction('stop_effect', {
+    light: 'ext:ext-yeelight:yeelight:0x9',
+  });
+  assert.equal(unknownLight.success, false);
+  assert.match(unknownLight.error, /not a device of this integration/);
+  const unknownEffect = await gladys.fake.sceneAction('start_effect', {
+    light: DEVICE_ID,
+    effect: 'disco',
+  });
+  assert.equal(unknownEffect.success, false);
+  assert.match(unknownEffect.error, /Unknown effect/);
+  await app.shutdown();
+});
+
+test('every scene trigger and action of the manifest is wired, with its declared data only', async () => {
+  const { gladys, app } = await start();
+  for (const action of manifest.scene_actions) {
+    const ack = await gladys.fake.sceneAction(action.key, {});
+    assert.doesNotMatch(String(ack.error), /not implemented/, action.key);
+  }
+  const effectField = manifest.scene_actions
+    .find((action) => action.key === 'start_effect')
+    .fields.find((field) => field.key === 'effect');
+  assert.deepEqual(
+    effectField.options.map((option) => option.value),
+    EFFECTS,
+  );
+  const variables = Object.fromEntries(
+    manifest.scene_triggers.map((trigger) => [
+      trigger.key,
+      trigger.variables.map((variable) => variable.key).sort(),
+    ]),
+  );
+  assert.deepEqual(variables, {
+    light_offline: ['address', 'light', 'name'],
+    light_online: ['address', 'light', 'name', 'offline_minutes'],
+  });
   await app.shutdown();
 });

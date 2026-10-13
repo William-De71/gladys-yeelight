@@ -23,6 +23,8 @@ import {
   refreshDevice,
   setDeviceValue,
 } from './devices.js';
+import { createSceneEvents } from './events.js';
+import { registerSceneActions } from './scenes.js';
 
 const logger = createLogger({ name: 'yeelight' });
 
@@ -31,12 +33,14 @@ const logger = createLogger({ name: 'yeelight' });
  * @param {object} gladys - The Gladys SDK instance (real or fake).
  * @param {object} [options] - Dependencies the tests replace.
  * @param {object} [options.manager] - The light manager (a YeelightManager by default).
+ * @param {object} [options.sceneEvents] - Options of createSceneEvents (delay, clock).
  * @returns {object} `{ manager, publishDevices, shutdown }`.
  * @example
  * const app = createApp(new GladysIntegration());
  */
 export function createApp(gladys, options = {}) {
   const manager = options.manager || new YeelightManager();
+  const sceneEvents = createSceneEvents(gladys, options.sceneEvents);
 
   let config = normalizeConfig();
 
@@ -51,7 +55,11 @@ export function createApp(gladys, options = {}) {
   // --- Reachability: a bulb connects or drops --------------------------------
   manager.onConnectionChange((bulbId, connected) => {
     publishBulbTransport(gladys, bulbId, connected).catch(() => {});
+    sceneEvents.connectionChange(bulbId, connected);
   });
+
+  // --- Scene actions: light effects ------------------------------------------
+  registerSceneActions(gladys, manager);
 
   /**
    * Refresh the configuration, discover the bulbs and publish them.
@@ -174,6 +182,7 @@ export function createApp(gladys, options = {}) {
    * @returns {Promise<void>} Resolves once closed.
    */
   async function shutdown() {
+    sceneEvents.stop();
     await manager.disconnectAll({ permanent: true });
   }
 

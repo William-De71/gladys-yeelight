@@ -514,7 +514,7 @@ async function ensurePoweredOn(manager, bulbId, key, config) {
  * @param {object} device - The Gladys device.
  * @returns {boolean} True when the device carries a usable address.
  */
-function rememberDeviceAddress(manager, bulbId, device) {
+export function rememberDeviceAddress(manager, bulbId, device) {
   const param = (device.params || []).find((entry) => entry.name === PARAM_ADDRESS);
   const address = param ? parseAddress(param.value) : null;
   if (!address) {
