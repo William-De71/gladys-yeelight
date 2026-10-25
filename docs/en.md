@@ -31,7 +31,7 @@ A light cut at the wall switch cannot say goodbye: it simply goes silent. So eve
 
 ### Gladys version
 
-The integration requires **Gladys 5.1.0 or newer**, because of its scenes. On an older Gladys, the integration no longer receives updates and stays on version 1.3.0: update Gladys to get the new versions.
+The integration requires **Gladys 5.3.0 or newer**. On an older Gladys, the integration no longer receives updates and stays on version 1.4.1 (1.3.0 before Gladys 5.1.0): update Gladys to get the new versions.
 
 ### Enable "LAN Control" — mandatory
 

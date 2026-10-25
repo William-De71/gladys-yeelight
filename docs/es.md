@@ -31,7 +31,7 @@ Una luz apagada en el interruptor de pared no puede avisar: simplemente se queda
 
 ### Versión de Gladys
 
-La integración requiere **Gladys 5.1.0 o posterior**, por sus escenas. En un Gladys más antiguo, la integración ya no recibe actualizaciones y se queda en la versión 1.3.0: actualice Gladys para obtener las nuevas versiones.
+La integración requiere **Gladys 5.3.0 o posterior**. En un Gladys más antiguo, la integración ya no recibe actualizaciones y se queda en la versión 1.4.1 (1.3.0 antes de Gladys 5.1.0): actualice Gladys para obtener las nuevas versiones.
 
 ### Activar «Control LAN» — imprescindible
 

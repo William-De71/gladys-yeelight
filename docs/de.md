@@ -31,7 +31,7 @@ Eine am Wandschalter ausgeschaltete Lampe kann sich nicht abmelden: Sie verstumm
 
 ### Gladys-Version
 
-Die Integration setzt wegen ihrer Szenen **Gladys 5.1.0 oder neuer** voraus. Auf einem älteren Gladys erhält die Integration keine Updates mehr und bleibt auf Version 1.3.0: Aktualisieren Sie Gladys, um die neuen Versionen zu bekommen.
+Die Integration setzt **Gladys 5.3.0 oder neuer** voraus. Auf einem älteren Gladys erhält die Integration keine Updates mehr und bleibt auf Version 1.4.1 (1.3.0 vor Gladys 5.1.0): Aktualisieren Sie Gladys, um die neuen Versionen zu bekommen.
 
 ### „LAN-Steuerung“ aktivieren — unerlässlich
 

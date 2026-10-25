@@ -5,7 +5,7 @@
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Latest release](https://img.shields.io/github/v/release/William-De71/gladys-yeelight?sort=semver)](https://github.com/William-De71/gladys-yeelight/releases)
 [![CI](https://img.shields.io/github/actions/workflow/status/William-De71/gladys-yeelight/release.yml?branch=main&label=CI)](https://github.com/William-De71/gladys-yeelight/actions/workflows/release.yml)
-[![Gladys](https://img.shields.io/badge/Gladys-%E2%89%A5%205.1.0-2f6fb5)](https://gladysassistant.com)
+[![Gladys](https://img.shields.io/badge/Gladys-%E2%89%A5%205.3.0-2f6fb5)](https://gladysassistant.com)
 
 ![Yeelight for Gladys Assistant](cover.jpg)
 
@@ -164,11 +164,11 @@ Three scenes to start with:
 
 ## Installation
 
-1. In Gladys (**5.1.0 or newer**): **Integrations → Store**, search for **Yeelight**, install.
+1. In Gladys (**5.3.0 or newer**): **Integrations → Store**, search for **Yeelight**, install.
 2. In the Yeelight app, enable **LAN Control** on each light.
 3. **Discover → Scan**, then add the lights you want.
 
-Since the scene triggers and actions, the integration requires Gladys 5.1.0: an older Gladys no longer receives its updates and stays on version 1.3.0 until Gladys itself is updated. The [user documentation](docs/en.md) details the network requirements, the lights added by hand, the ceiling lights with an ambient ring, the scenes and the troubleshooting.
+The integration requires Gladys 5.3.0 (scene triggers and actions since 5.1.0, catalog keywords and countries since 5.3.0): an older Gladys no longer receives its updates and stays on version 1.4.1 (1.3.0 before Gladys 5.1.0) until Gladys itself is updated. The [user documentation](docs/en.md) details the network requirements, the lights added by hand, the ceiling lights with an ambient ring, the scenes and the troubleshooting.
 
 ## Development
 

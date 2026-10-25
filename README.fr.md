@@ -5,7 +5,7 @@
 [![Licence : Apache-2.0](https://img.shields.io/badge/licence-Apache--2.0-blue.svg)](LICENSE)
 [![Dernière version](https://img.shields.io/github/v/release/William-De71/gladys-yeelight?sort=semver)](https://github.com/William-De71/gladys-yeelight/releases)
 [![CI](https://img.shields.io/github/actions/workflow/status/William-De71/gladys-yeelight/release.yml?branch=main&label=CI)](https://github.com/William-De71/gladys-yeelight/actions/workflows/release.yml)
-[![Gladys](https://img.shields.io/badge/Gladys-%E2%89%A5%205.1.0-2f6fb5)](https://gladysassistant.com)
+[![Gladys](https://img.shields.io/badge/Gladys-%E2%89%A5%205.3.0-2f6fb5)](https://gladysassistant.com)
 
 ![Yeelight pour Gladys Assistant](cover.jpg)
 
@@ -164,11 +164,11 @@ Trois scènes pour commencer :
 
 ## Installation
 
-1. Dans Gladys (**5.1.0 ou plus récent**) : **Intégrations**, cherchez **Yeelight** dans le store, installez-la.
+1. Dans Gladys (**5.3.0 ou plus récent**) : **Intégrations**, cherchez **Yeelight** dans le store, installez-la.
 2. Dans l'application Yeelight, activez **Contrôle LAN** sur chaque lampe.
 3. **Découverte → Scanner**, puis ajoutez les lampes de votre choix.
 
-Depuis les déclencheurs et actions de scène, l'intégration exige Gladys 5.1.0 : un Gladys plus ancien ne reçoit plus ses mises à jour et reste en version 1.3.0 jusqu'à ce que Gladys lui-même soit mis à jour. La [documentation utilisateur](docs/fr.md) détaille les prérequis réseau, les lampes ajoutées à la main, les plafonniers à anneau d'ambiance, les scènes et la résolution de problèmes.
+L'intégration exige Gladys 5.3.0 (déclencheurs et actions de scène depuis la 5.1.0, mots-clés et pays du catalogue depuis la 5.3.0) : un Gladys plus ancien ne reçoit plus ses mises à jour et reste en version 1.4.1 (1.3.0 avant Gladys 5.1.0) jusqu'à ce que Gladys lui-même soit mis à jour. La [documentation utilisateur](docs/fr.md) détaille les prérequis réseau, les lampes ajoutées à la main, les plafonniers à anneau d'ambiance, les scènes et la résolution de problèmes.
 
 ## Développement
 

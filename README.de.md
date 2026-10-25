@@ -5,7 +5,7 @@
 [![Lizenz: Apache-2.0](https://img.shields.io/badge/Lizenz-Apache--2.0-blue.svg)](LICENSE)
 [![Neueste Version](https://img.shields.io/github/v/release/William-De71/gladys-yeelight?sort=semver)](https://github.com/William-De71/gladys-yeelight/releases)
 [![CI](https://img.shields.io/github/actions/workflow/status/William-De71/gladys-yeelight/release.yml?branch=main&label=CI)](https://github.com/William-De71/gladys-yeelight/actions/workflows/release.yml)
-[![Gladys](https://img.shields.io/badge/Gladys-%E2%89%A5%205.1.0-2f6fb5)](https://gladysassistant.com)
+[![Gladys](https://img.shields.io/badge/Gladys-%E2%89%A5%205.3.0-2f6fb5)](https://gladysassistant.com)
 
 ![Yeelight für Gladys Assistant](cover.jpg)
 
@@ -164,11 +164,11 @@ Drei Szenen für den Anfang:
 
 ## Installation
 
-1. In Gladys (**5.1.0 oder neuer**): **Integrationen → Store**, nach **Yeelight** suchen, installieren.
+1. In Gladys (**5.3.0 oder neuer**): **Integrationen → Store**, nach **Yeelight** suchen, installieren.
 2. Aktivieren Sie in der Yeelight-App **LAN-Steuerung** auf jeder Lampe.
 3. **Entdecken → Scannen**, dann die gewünschten Lampen hinzufügen.
 
-Seit den Szenen-Auslösern und -Aktionen setzt die Integration Gladys 5.1.0 voraus: Ein älteres Gladys erhält ihre Updates nicht mehr und bleibt auf Version 1.3.0, bis Gladys selbst aktualisiert wird. Die [Benutzerdokumentation](docs/de.md) erläutert die Netzwerkvoraussetzungen, die manuell hinzugefügten Lampen, die Deckenleuchten mit Ambientering, die Szenen und die Fehlerbehebung.
+Die Integration setzt Gladys 5.3.0 voraus (Szenen-Auslöser und -Aktionen seit 5.1.0, Katalog-Schlagwörter und -Länder seit 5.3.0): Ein älteres Gladys erhält ihre Updates nicht mehr und bleibt auf Version 1.4.1 (1.3.0 vor Gladys 5.1.0), bis Gladys selbst aktualisiert wird. Die [Benutzerdokumentation](docs/de.md) erläutert die Netzwerkvoraussetzungen, die manuell hinzugefügten Lampen, die Deckenleuchten mit Ambientering, die Szenen und die Fehlerbehebung.
 
 ## Entwicklung
 

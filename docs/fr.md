@@ -31,7 +31,7 @@ Une lampe coupée à l'interrupteur mural ne peut pas prévenir : elle se tait, 
 
 ### Version de Gladys
 
-L'intégration exige **Gladys 5.1.0 ou plus récent**, à cause de ses scènes. Sur un Gladys plus ancien, l'intégration ne reçoit plus de mises à jour et reste en version 1.3.0 : mettez Gladys à jour pour obtenir les nouvelles versions.
+L'intégration exige **Gladys 5.3.0 ou plus récent**. Sur un Gladys plus ancien, l'intégration ne reçoit plus de mises à jour et reste en version 1.4.1 (1.3.0 avant Gladys 5.1.0) : mettez Gladys à jour pour obtenir les nouvelles versions.
 
 ### Activer « Contrôle LAN » — indispensable
 

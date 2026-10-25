@@ -5,7 +5,7 @@
 [![Licencia: Apache-2.0](https://img.shields.io/badge/licencia-Apache--2.0-blue.svg)](LICENSE)
 [![Última versión](https://img.shields.io/github/v/release/William-De71/gladys-yeelight?sort=semver)](https://github.com/William-De71/gladys-yeelight/releases)
 [![CI](https://img.shields.io/github/actions/workflow/status/William-De71/gladys-yeelight/release.yml?branch=main&label=CI)](https://github.com/William-De71/gladys-yeelight/actions/workflows/release.yml)
-[![Gladys](https://img.shields.io/badge/Gladys-%E2%89%A5%205.1.0-2f6fb5)](https://gladysassistant.com)
+[![Gladys](https://img.shields.io/badge/Gladys-%E2%89%A5%205.3.0-2f6fb5)](https://gladysassistant.com)
 
 ![Yeelight para Gladys Assistant](cover.jpg)
 
@@ -164,11 +164,11 @@ Tres escenas para empezar:
 
 ## Instalación
 
-1. En Gladys (**5.1.0 o posterior**): **Integraciones → Tienda**, busque **Yeelight** e instálela.
+1. En Gladys (**5.3.0 o posterior**): **Integraciones → Tienda**, busque **Yeelight** e instálela.
 2. En la aplicación Yeelight, active **Control LAN** en cada luz.
 3. **Descubrir → Buscar**, y añada las luces que desee.
 
-Desde los activadores y acciones de escena, la integración requiere Gladys 5.1.0: un Gladys más antiguo ya no recibe sus actualizaciones y se queda en la versión 1.3.0 hasta que se actualice el propio Gladys. La [documentación de usuario](docs/es.md) detalla los requisitos de red, las luces añadidas a mano, los plafones con anillo ambiental, las escenas y la solución de problemas.
+La integración requiere Gladys 5.3.0 (activadores y acciones de escena desde 5.1.0, palabras clave y países del catálogo desde 5.3.0): un Gladys más antiguo ya no recibe sus actualizaciones y se queda en la versión 1.4.1 (1.3.0 antes de Gladys 5.1.0) hasta que se actualice el propio Gladys. La [documentación de usuario](docs/es.md) detalla los requisitos de red, las luces añadidas a mano, los plafones con anillo ambiental, las escenas y la solución de problemas.
 
 ## Desarrollo
 
